@@ -20,4 +20,6 @@ public class User {
     public int getDocId() {
         return docId;
     }
+
+    //TODO implement tostring and equals
 }

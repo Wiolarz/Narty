@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-public class SkiType implements Serializable, dataType {
+public class SkiType {
     private final String name;
     private final String description;
 
@@ -23,7 +23,11 @@ public class SkiType implements Serializable, dataType {
     }
 
     @Override
-    public String getClassName() {
-        return "SkiType";
+    public boolean equals(Object obj) {
+        if (!obj.getClass().equals(getClass())){
+            return false;
+        }
+
+        return ((SkiType) obj).name.equals(name);
     }
 }

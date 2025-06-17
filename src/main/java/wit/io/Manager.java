@@ -8,8 +8,10 @@ import java.util.List;
 
 // TODO: SWING
 public abstract class Manager<T> {
-    private List<T> dataEntity;
-    private String filePath;
+
+    protected List<T> dataEntity;
+
+    protected String filePath;
 
     public abstract void writeToFile();
     public abstract void readFromFile();
@@ -19,13 +21,17 @@ public abstract class Manager<T> {
         this.filePath = filePath;
         readFromFile();
     }
+    public void resetEntityData(){
+        dataEntity = new ArrayList<>();
+        writeToFile();
+    }
 
     public void addEntity(T newEntity) throws EntityAlreadyPresent {
         if (Util.isAnyArgumentNull(newEntity)) {
             throw new IllegalArgumentException("newEntity cannot be null.");
         }
         if (entityExists(newEntity)) {
-            throw new EntityAlreadyPresent("Exception occurred adding new newEntity Type."); //TODO  + newEntity.getClassName()
+            throw new EntityAlreadyPresent("Exception occurred adding new newEntity Type." + newEntity.toString());
         }
 
         dataEntity.add(newEntity);
@@ -40,6 +46,7 @@ public abstract class Manager<T> {
         if (!entityExists(entity)) {
             throw new EntityNotPresent("Error removing ski.");
         }
+        // TODO: custom equals
         dataEntity.removeIf(s -> s.equals(entity));
         writeToFile();
     }
@@ -62,7 +69,7 @@ public abstract class Manager<T> {
 
     private boolean entityExists(T entity) {
         for (T e : dataEntity) {
-            if (e == entity)
+            if (e.equals(entity))
                 return true;
         }
         return false;

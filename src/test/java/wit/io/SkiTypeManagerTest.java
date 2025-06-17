@@ -15,36 +15,30 @@ class SkiTypeManagerTest
 
     @BeforeEach
     public void setUp() {
-        manager = new SkiTypeManager("");
+        manager = new SkiTypeManager("src/test/java/wit/io/datasources/SkiType");
+        manager.resetEntityData();
     }
 
-    public void populateSkiTypes() {
-        manager.setSkiTypes(
-                List.of(
-                        new SkiType("name1", "a"),
-                        new SkiType("name1", "b")
-                )
-        );
+    public void populateSkiTypes() throws EntityAlreadyPresent {
+        manager.addEntity(new SkiType("hello1", "world1"));
     }
 
     @Test
-    public void givenSkiTypeExists_whenAddingNewType_thenThrowSkiTypeAlreadyPresentException() {
+    public void givenSkiTypeExists_whenAddingNewType_thenThrowSkiTypeAlreadyPresentException() throws EntityAlreadyPresent{
         populateSkiTypes();
 
         assertThrows(
                 EntityAlreadyPresent.class,
-                () -> manager.addSkiType("name1", "a")
+                () -> manager.addEntity(new SkiType("hello1", "world1"))
         );
     }
 
     @Test
     public void givenSkiTypeDoesNotExist_whenAddingNewType_thenAddToSkiTypes() throws Exception {
-        populateSkiTypes();
+        manager.addEntity(new SkiType("newName", "aaa"));
 
-        manager.addSkiType("newName", "aaa");
-
-        assertEquals(1, manager.getSkiTypes().size());
-        assertEquals("newName", manager.getSkiTypes().get(0).getName());
-        assertEquals("aaa", manager.getSkiTypes().get(0).getDescription());
+        assertEquals(1, manager.getEntities().size());
+        assertEquals("newName", manager.getEntities().get(0).getName());
+        assertEquals("aaa", manager.getEntities().get(0).getDescription());
     }
 }

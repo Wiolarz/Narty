@@ -26,4 +26,6 @@ public class Ski {
     public String getName() {
         return model;
     }
+
+    //TODO implement tostring and equals
 }
