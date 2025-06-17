@@ -1,8 +1,7 @@
 package wit.io;
 
-import exceptions.SkiTypeAlreadyPresent;
-import exceptions.SkiTypeNotPresent;
-import wit.io.data.Ski;
+import exceptions.EntityAlreadyPresent;
+import exceptions.EntityNotPresent;
 import wit.io.data.SkiType;
 
 import java.io.*;
@@ -39,12 +38,12 @@ public class SkiTypeManager {
         readFromFile();
     }
 
-    public void addSkiType(String name, String description) throws SkiTypeAlreadyPresent {
+    public void addSkiType(String name, String description) throws EntityAlreadyPresent {
         if (Util.isAnyArgumentNull(name)) {
             throw new IllegalArgumentException("name cannot be null.");
         }
         if (skiTypeExists(name)) {
-            throw new SkiTypeAlreadyPresent("Exception occurred adding new Ski Type.");
+            throw new EntityAlreadyPresent("Exception occurred adding new Ski Type.");
         }
 
         SkiType newSkiType = new SkiType(name, description == null ? "" : description);
@@ -53,18 +52,18 @@ public class SkiTypeManager {
     }
 
 
-    public void removeSkiType(String skiTypeName) throws SkiTypeNotPresent {
+    public void removeSkiType(String skiTypeName) throws EntityNotPresent {
         if (Util.isAnyArgumentNull(skiTypeName)) {
             throw new IllegalArgumentException("skiTypeName cannot be null.");
         }
         if (!skiTypeExists(skiTypeName)) {
-            throw new SkiTypeNotPresent("Error removing ski.");
+            throw new EntityNotPresent("Error removing ski.");
         }
         skiTypes.removeIf(s -> s.getName().equals(skiTypeName));
     }
 
     public void editSkiType(String skiTypeName, SkiType updatedSki)
-        throws SkiTypeNotPresent, SkiTypeAlreadyPresent, IllegalArgumentException {
+        throws EntityNotPresent, EntityAlreadyPresent, IllegalArgumentException {
         if (Util.isAnyArgumentNull(skiTypeName, updatedSki)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }

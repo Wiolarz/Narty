@@ -1,12 +1,10 @@
 package wit.io;
 
-import exceptions.SkiTypeAlreadyPresent;
+import exceptions.EntityAlreadyPresent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import wit.io.data.Ski;
 import wit.io.data.SkiType;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,7 +32,7 @@ class SkiTypeManagerTest
         populateSkiTypes();
 
         assertThrows(
-                SkiTypeAlreadyPresent.class,
+                EntityAlreadyPresent.class,
                 () -> manager.addSkiType("name1", "a")
         );
     }

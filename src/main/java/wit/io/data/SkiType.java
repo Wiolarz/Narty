@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-public class SkiType implements Serializable {
+public class SkiType implements Serializable, dataType {
     private final String name;
     private final String description;
 
@@ -22,4 +22,8 @@ public class SkiType implements Serializable {
         return description;
     }
 
+    @Override
+    public String getClassName() {
+        return "SkiType";
+    }
 }

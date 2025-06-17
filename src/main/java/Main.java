@@ -1,12 +1,8 @@
 
-import exceptions.SkiTypeAlreadyPresent;
-import exceptions.SkiTypeNotPresent;
 import wit.io.Const;
 import wit.io.SkiTypeManager;
-import wit.io.data.Ski;
 import wit.io.data.SkiType;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
