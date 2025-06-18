@@ -2,6 +2,8 @@ package wit.io.data;
 
 import wit.io.utils.Util;
 
+import java.util.Objects;
+
 // (typ, marka, model, wiązania, długość)
 public class Ski {
     /*
@@ -18,7 +20,7 @@ public class Ski {
 
     public Ski(SkiType type, String brand, String model, String bonds, Float length) {
         if (Util.isAnyArgumentNull(type, brand, model, bonds, length)) {
-            throw new IllegalArgumentException("Arguments cannot be null.");
+            throw new IllegalArgumentException("One or more of given arguments were null.");
         }
 
         this.id = hashCode();
@@ -31,13 +33,7 @@ public class Ski {
 
     @Override
     public int hashCode() {
-        int result = id ^ (id >>> 32);
-        result = 31 * result + type.hashCode();
-        result = 31 * result + brand.hashCode();
-        result = 31 * result + model.hashCode();
-        result = 31 * result + bonds.hashCode();
-        result = 31 * result + length.hashCode();
-        return result;
+        return Objects.hash(type, brand, model, bonds, length);
     }
 
     @Override

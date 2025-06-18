@@ -1,13 +1,13 @@
 package wit.io;
 
-import exceptions.UserAlreadyPresent;
-import exceptions.UserNotPresent;
+import exceptions.UserAlreadyPresentException;
+import exceptions.UserNotPresentException;
 import wit.io.data.Client;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserManager {
+public class ClientManager {
     private List<Client> clients = new ArrayList<>();
 
     public List<Client> getUsers() {
@@ -19,17 +19,17 @@ public class UserManager {
     }
 
 
-    public UserManager() {
+    public ClientManager() {
     }
 
-    public UserManager(List<Client> clients) {
+    public ClientManager(List<Client> clients) {
         this();
         this.clients = clients;
     }
 
-    public void addUser(String firstName, String lastName, int docId, String description) throws UserAlreadyPresent {
+    public void addUser(String firstName, String lastName, int docId, String description) throws UserAlreadyPresentException {
         if (UserExists(docId)) {
-            throw new UserAlreadyPresent("Exception occurred adding new User.");
+            throw new UserAlreadyPresentException("Exception occurred adding new User.");
         }
 
         Client newClient = new Client(firstName, lastName, docId, description);
@@ -37,15 +37,15 @@ public class UserManager {
         // todo: save/override user files here?
     }
 
-    public void removeUser(int docId) throws UserNotPresent {
+    public void removeUser(int docId) throws UserNotPresentException {
         if (!UserExists(docId)) {
-            throw new UserNotPresent();
+            throw new UserNotPresentException();
         }
     }
 
-    public void editUser(int docId) throws UserAlreadyPresent {
+    public void editUser(int docId) throws UserAlreadyPresentException {
         if (UserExists(docId)) {
-            throw new UserAlreadyPresent();
+            throw new UserAlreadyPresentException();
         }
 
     }

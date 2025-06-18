@@ -13,6 +13,8 @@ public abstract class Manager<T> {
     protected String filePath;
 
     public abstract void writeToFile() throws WritingException;
+
+    // ran only once per manager, at the start of the program
     public abstract void readFromFile() throws ReadingException;
 
     public Manager(String filePath) throws ReadingException{
@@ -25,12 +27,12 @@ public abstract class Manager<T> {
         writeToFile();
     }
 
-    public void addEntity(T newEntity) throws EntityAlreadyPresent, WritingException {
+    public void addEntity(T newEntity) throws EntityAlreadyPresentException, WritingException {
         if (Util.isAnyArgumentNull(newEntity)) {
             throw new IllegalArgumentException("newEntity cannot be null.");
         }
         if (entityExists(newEntity)) {
-            throw new EntityAlreadyPresent("Exception occurred adding new newEntity Type." + newEntity.toString());
+            throw new EntityAlreadyPresentException("Exception occurred adding new newEntity Type." + newEntity.toString());
         }
 
         dataEntity.add(newEntity);
@@ -38,12 +40,12 @@ public abstract class Manager<T> {
     }
 
 
-    public void removeEntity(T entity) throws EntityNotPresent, WritingException {
+    public void removeEntity(T entity) throws EntityNotPresentException, WritingException {
         if (Util.isAnyArgumentNull(entity)) {
             throw new IllegalArgumentException("entity cannot be null.");
         }
         if (!entityExists(entity)) {
-            throw new EntityNotPresent("Error removing ski.");
+            throw new EntityNotPresentException("Error removing e.");
         }
         // TODO: custom equals
         dataEntity.removeIf(s -> s.equals(entity));
@@ -51,7 +53,7 @@ public abstract class Manager<T> {
     }
 
     public void editEntity(T oldEntity, T newEntity)
-            throws EntityNotPresent, EntityAlreadyPresent, IllegalArgumentException, WritingException {
+            throws EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException {
         if (Util.isAnyArgumentNull(oldEntity, newEntity)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }

@@ -1,6 +1,7 @@
 package wit.io;
 
-import exceptions.EntityAlreadyPresent;
+import exceptions.EntityAlreadyPresentException;
+import exceptions.EntityNotPresentException;
 import exceptions.ReadingException;
 import exceptions.WritingException;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,11 +28,11 @@ class SkiTypeManagerTest
     }
 
     @Test
-    public void givenSkiTypeExists_whenAddingNewType_thenThrowSkiTypeAlreadyPresentException() throws EntityAlreadyPresent, WritingException{
+    public void givenSkiTypeExists_whenAddingNewType_thenThrowSkiTypeAlreadyPresentException() throws EntityAlreadyPresentException, WritingException{
         manager.addEntity(new SkiType("hello1", "world1"));
 
         assertThrows(
-                EntityAlreadyPresent.class,
+                EntityAlreadyPresentException.class,
                 () -> manager.addEntity(new SkiType("hello1", "world1"))
         );
     }
@@ -39,6 +40,37 @@ class SkiTypeManagerTest
     @Test
     public void givenSkiTypeEqualsNull_whenAddingNewType_thenThrowIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> manager.addEntity(null));
+    }
+
+    @Test
+    public void givenSkiTypeNotPresentInManager_whenRemovingSki_thenThrowEntityNotPresentException() {
+        assertThrows(EntityNotPresentException.class, () -> manager.removeEntity(new SkiType("", "")));
+    }
+
+    @Test
+    public void givenSkiTypeEqualsNull_whenRemovingSki_thenThrowIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> manager.removeEntity(null));
+    }
+
+    @Test
+    public void givenSkiTypeExists_whenRemovingSki_thenSkiIsRemoved() throws WritingException, EntityAlreadyPresentException, EntityNotPresentException{
+        SkiType ski = new SkiType("hello1", "world1");
+        manager.addEntity(ski);
+
+        manager.removeEntity(ski);
+
+        assertFalse(manager.getEntities().contains(ski));
+        assertEquals(0, manager.getEntities().size());
+    }
+
+    @Test
+    public void givenSkiWithSimilarName_whenRemovingSki_thenThrowEntityNotPresentException() throws WritingException, EntityAlreadyPresentException, EntityNotPresentException {
+        manager.addEntity(new SkiType("hello1", "world1"));
+
+        assertThrows(
+                EntityNotPresentException.class,
+                () -> manager.removeEntity(new SkiType("hello11", "world1"))
+        );
     }
 
     @Test

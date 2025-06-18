@@ -1,8 +1,9 @@
 
-import exceptions.EntityAlreadyPresent;
-import exceptions.EntityNotPresent;
+import exceptions.EntityAlreadyPresentException;
+import exceptions.EntityNotPresentException;
 import exceptions.ReadingException;
 import exceptions.WritingException;
+import wit.io.data.enums.RentStatus;
 import wit.io.utils.Const;
 import wit.io.SkiTypeManager;
 import wit.io.data.SkiType;
@@ -10,8 +11,9 @@ import wit.io.data.SkiType;
 
 public class Main
 {
-    public static void main(String[] args) throws EntityAlreadyPresent, EntityNotPresent, WritingException {
+    public static void main(String[] args) throws EntityAlreadyPresentException, EntityNotPresentException, WritingException {
         System.out.println("Main Start");
+
         SkiTypeManager skiTypeManager;
         try {
             skiTypeManager = new SkiTypeManager(Const.SkiTypeFilePath);
@@ -23,8 +25,8 @@ public class Main
 
         SkiType skiType = new SkiType("hello", "world");
         SkiType skiType2 = new SkiType("kill", "mee");
-        // skiTypeManager.addEntity(skiType);
-        // skiTypeManager.addEntity(skiType2);
+        skiTypeManager.addEntity(skiType);
+        skiTypeManager.addEntity(skiType2);
         skiTypeManager.removeEntity(skiType);
         skiTypeManager.removeEntity(skiType2);
         System.out.println("elo przed writem");

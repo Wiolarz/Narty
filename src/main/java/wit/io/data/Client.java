@@ -3,12 +3,13 @@ package wit.io.data;
 import wit.io.utils.Util;
 
 public class Client {
-    private final int docId;
+    private final Integer docId;
     private final String firstName;
     private final String lastName;
     private final String description;
 
-    public Client(String firstName, String lastName, int docId, String description) {
+
+    public Client(String firstName, String lastName, Integer docId, String description) {
         if (Util.isAnyArgumentNull(firstName, lastName, docId)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
@@ -28,13 +29,33 @@ public class Client {
                 '}';
     }
 
-    public String getName() {
-        return firstName + lastName;
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (!obj.getClass().equals(getClass())){
+            return false;
+        }
+
+        return ((Client) obj).docId.equals(docId);
     }
+
 
     public int getDocId() {
         return docId;
     }
 
-    //TODO implement tostring and equals
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
 }

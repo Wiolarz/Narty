@@ -1,21 +1,17 @@
 package wit.io;
 
 import exceptions.ReadingException;
-import exceptions.SkiAlreadyPresent;
-import exceptions.SkiNotPresent;
 import exceptions.WritingException;
 import wit.io.data.Rent;
-import wit.io.data.Ski;
+import wit.io.data.enums.RentStatus;
 import wit.io.utils.Util;
-import wit.io.Manager;
 
 import java.io.*;
+import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+import java.util.Date;
 
 // TODO: SWING
 public class RentManager extends Manager<Rent> {
@@ -30,9 +26,14 @@ public class RentManager extends Manager<Rent> {
                      new DataOutputStream(new FileOutputStream(filePath))) {
 
             output.writeInt(dataEntity.size());
-            for (Rent type : dataEntity) {
-                //output.writeUTF(type.getName());//TODO rent saving
-                //output.writeUTF(type.getDescription());
+            for (Rent rent : dataEntity) {
+                output.writeInt(rent.getRentID());
+                output.writeUTF(Util.dateToString(rent.getStartDate()));
+                output.writeUTF(Util.dateToString(rent.getEndDate()));
+                output.writeUTF(String.valueOf(rent.getSkiID()));
+                output.writeUTF(String.valueOf(rent.getClientID()));
+                output.writeUTF(rent.getComment());
+                output.writeUTF(rent.getStatus().name());
             }
 
         } catch (IOException e) {
@@ -43,21 +44,26 @@ public class RentManager extends Manager<Rent> {
 
     @Override
     public void readFromFile() throws ReadingException{
-        // ran only once per manager, at the start of the program
         try (DataInputStream input =
                      new DataInputStream(new FileInputStream(filePath))) {
             int length = input.readInt();
             for (int i = 0; i < length; i++) {
-                /*String name = input.readUTF(); //TODO add reading
-                String description = input.readUTF();
-                RentManager rent = new Rent();
-                System.out.println(rent.getName());
-                System.out.println(rent.getDescription());
-                dataEntity.add(rent);*/
+                Integer rentID = input.readInt();
+                Date startDate = Util.stringToDate(input.readUTF());
+                Date endDate = Util.stringToDate(input.readUTF());
+                Integer skiID = input.readInt();
+                Integer clientID = input.readInt();
+                String comment = input.readUTF();
+                RentStatus rentStatus = RentStatus.valueOf(input.readUTF());
+                Rent rent = new Rent(rentID, startDate, endDate, skiID, clientID, comment, rentStatus);
+                System.out.println(rent);
+                dataEntity.add(rent);
             }
 
-        }catch(IOException e){
+        }catch(IOException | ParseException e){
             throw new ReadingException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
