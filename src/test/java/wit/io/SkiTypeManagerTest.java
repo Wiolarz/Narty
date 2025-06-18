@@ -7,6 +7,7 @@ import exceptions.WritingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import wit.io.data.SkiType;
+import wit.io.managers.SkiTypeManager;
 
 import java.util.ArrayList;
 import java.util.List;

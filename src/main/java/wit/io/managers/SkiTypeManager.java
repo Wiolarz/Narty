@@ -1,4 +1,4 @@
-package wit.io;
+package wit.io.managers;
 
 import exceptions.ReadingException;
 import exceptions.WritingException;
@@ -11,8 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-// TODO: SWING
-public class SkiTypeManager extends Manager<SkiType>{
+public class SkiTypeManager extends Manager<SkiType> {
     public SkiTypeManager(String filePath) throws ReadingException {
         super(filePath);
     }
@@ -40,13 +39,12 @@ public class SkiTypeManager extends Manager<SkiType>{
         // ran only once per manager, at the start of the program
         try (DataInputStream input =
                      new DataInputStream(new FileInputStream(filePath))) {
-            int length = input.readInt();
-            for (int i = 0; i < length; i++) {
+            int dataLength = input.readInt();
+            for (int i = 0; i < dataLength; i++) {
                 String name = input.readUTF();
                 String description = input.readUTF();
                 SkiType skiType = new SkiType(name, description);
-                System.out.println(skiType.getName());
-                System.out.println(skiType.getDescription());
+
                 dataEntity.add(skiType);
             }
 
@@ -59,11 +57,11 @@ public class SkiTypeManager extends Manager<SkiType>{
     public ArrayList<SkiType> search(String nameSuffix, String partialDescription) {
         Stream<SkiType> stream = getEntities().stream();
 
-        if(!Util.isAnyArgumentNull(nameSuffix)) {
+        if(nameSuffix != null) {
             stream = stream.filter(ski -> ski.getName().toLowerCase().startsWith(nameSuffix.toLowerCase()));
         }
 
-        if(!Util.isAnyArgumentNull(nameSuffix)) {
+        if(partialDescription != null) {
             stream = stream.filter(ski -> ski.getDescription().toLowerCase().contains(partialDescription.toLowerCase()));
         }
 

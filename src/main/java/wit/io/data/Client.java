@@ -9,7 +9,7 @@ public class Client {
     private final String description;
 
 
-    public Client(String firstName, String lastName, Integer docId, String description) {
+    public Client(Integer docId, String firstName, String lastName, String description) {
         if (Util.isAnyArgumentNull(firstName, lastName, docId)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
@@ -43,7 +43,7 @@ public class Client {
     }
 
 
-    public int getDocId() {
+    public Integer getDocId() {
         return docId;
     }
 

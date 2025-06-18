@@ -16,22 +16,25 @@ public class Rent {
     private final String comment;
     private final RentStatus status;
 
-    public Rent(Integer rentID, Date startDate, Date endDate, Integer skiID, Integer clientID, String comments, RentStatus status) throws Exception {
-        if (Util.isAnyArgumentNull(rentID, endDate, skiID, clientID, status)) {
+    public Rent(Date startDate, Date endDate, Integer skiID, Integer clientID, String comments, RentStatus status) throws Exception {
+        if (Util.isAnyArgumentNull(endDate, skiID, clientID)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
-        this.rentID = rentID;
+        this.rentID = hashCode();
+        // TODO: być może w managerze lepiej to robić. Btw czemu toString()?
         this.startDate = (startDate == null) ? Util.stringToDate(LocalDate.now().toString()) : startDate;
         this.comment = (comments == null) ? "" : comments;
         this.endDate = endDate;
         this.skiID = skiID;
         this.clientID = clientID;
+        // status can be null, when initializing new Rent and will be set while adding new object
+        // but status can be set when loading previously saved object
         this.status = status;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(rentID, startDate, endDate, skiID, clientID, comment, status);
+        return Objects.hash(startDate, endDate, skiID, clientID, comment, status);
     }
 
     @Override
@@ -49,15 +52,15 @@ public class Rent {
 
     @Override
     public boolean equals(Object o) {
-        if (obj == null) {
+        if (o == null) {
             return false;
         }
 
-        if (!obj.getClass().equals(getClass())){
+        if (!o.getClass().equals(getClass())){
             return false;
         }
 
-        return ((Rent) obj).hashCode() == (obj.hashCode());
+        return ((Rent) o).hashCode() == (o.hashCode());
     }
 
     public Integer getRentID() {

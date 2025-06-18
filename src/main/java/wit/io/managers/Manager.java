@@ -1,4 +1,4 @@
-package wit.io;
+package wit.io.managers;
 
 import exceptions.*;
 import wit.io.utils.Util;

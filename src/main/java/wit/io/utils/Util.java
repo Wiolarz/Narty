@@ -25,4 +25,16 @@ public class Util {
         return formatter.parse(string);
     }
 
+    // checks whether the first string contains the second string.
+    // NOT CASE SENSITIVE
+    public static boolean containsString(String string1, String string2) {
+        return string1.toLowerCase().contains(string2.toLowerCase());
+    }
+
+    // checks if first string starts with the second string
+    // NOT CASE SENSITIVE
+    public static boolean startsWithString(String string1, String string2) {
+        return string1.toLowerCase().startsWith(string2.toLowerCase());
+    }
+
 }
