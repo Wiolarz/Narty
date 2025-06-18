@@ -1,6 +1,6 @@
 package exceptions;
 
-public class UserNotPresent extends Exception {
+public class UserNotPresent extends SkiAppException {
     public UserNotPresent() {
         super();
     }

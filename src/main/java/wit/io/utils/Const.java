@@ -1,4 +1,4 @@
-package wit.io;
+package wit.io.utils;
 
 public enum Const {
     ;

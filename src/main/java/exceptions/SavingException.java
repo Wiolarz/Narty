@@ -1,6 +1,6 @@
 package exceptions;
 
-public class SavingException extends Exception{
+public class SavingException extends SkiAppException{
     public SavingException() {
         super();
     }

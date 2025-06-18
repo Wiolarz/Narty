@@ -1,32 +1,31 @@
 package wit.io;
 
-import exceptions.EntityAlreadyPresent;
-import exceptions.EntityNotPresent;
+import exceptions.*;
+import wit.io.utils.Util;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
 // TODO: SWING
 public abstract class Manager<T> {
-
     protected List<T> dataEntity;
-
     protected String filePath;
 
-    public abstract void writeToFile();
-    public abstract void readFromFile();
+    public abstract void writeToFile() throws WritingException;
+    public abstract void readFromFile() throws ReadingException;
 
-    public Manager(String filePath) {
+    public Manager(String filePath) throws ReadingException{
         dataEntity = new ArrayList<>();
         this.filePath = filePath;
         readFromFile();
     }
-    public void resetEntityData(){
+    public void resetEntityData() throws WritingException{
         dataEntity = new ArrayList<>();
         writeToFile();
     }
 
-    public void addEntity(T newEntity) throws EntityAlreadyPresent {
+    public void addEntity(T newEntity) throws EntityAlreadyPresent, WritingException {
         if (Util.isAnyArgumentNull(newEntity)) {
             throw new IllegalArgumentException("newEntity cannot be null.");
         }
@@ -39,7 +38,7 @@ public abstract class Manager<T> {
     }
 
 
-    public void removeEntity(T entity) throws EntityNotPresent {
+    public void removeEntity(T entity) throws EntityNotPresent, WritingException {
         if (Util.isAnyArgumentNull(entity)) {
             throw new IllegalArgumentException("entity cannot be null.");
         }
@@ -52,7 +51,7 @@ public abstract class Manager<T> {
     }
 
     public void editEntity(T oldEntity, T newEntity)
-            throws EntityNotPresent, EntityAlreadyPresent, IllegalArgumentException {
+            throws EntityNotPresent, EntityAlreadyPresent, IllegalArgumentException, WritingException {
         if (Util.isAnyArgumentNull(oldEntity, newEntity)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }

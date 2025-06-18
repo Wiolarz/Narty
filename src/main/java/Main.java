@@ -1,28 +1,51 @@
 
 import exceptions.EntityAlreadyPresent;
 import exceptions.EntityNotPresent;
-import wit.io.Const;
+import exceptions.ReadingException;
+import exceptions.WritingException;
+import wit.io.utils.Const;
 import wit.io.SkiTypeManager;
 import wit.io.data.SkiType;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class Main
 {
-    public static void main(String[] args) throws EntityAlreadyPresent, EntityNotPresent {
-        SkiTypeManager skiTypeManager = new SkiTypeManager(Const.SkiTypeFilePath);
+    public static void main(String[] args) throws EntityAlreadyPresent, EntityNotPresent, WritingException {
+        System.out.println("Main Start");
+        SkiTypeManager skiTypeManager;
+        try {
+            skiTypeManager = new SkiTypeManager(Const.SkiTypeFilePath);
+        } catch (ReadingException e)
+        {
+            System.out.println("Failed to create Manager");
+            return;
+        }
+
         SkiType skiType = new SkiType("hello", "world");
         SkiType skiType2 = new SkiType("kill", "mee");
-        //skiTypeManager.addEntity(skiType);
-        //skiTypeManager.addEntity(skiType2);
+        // skiTypeManager.addEntity(skiType);
+        // skiTypeManager.addEntity(skiType2);
         skiTypeManager.removeEntity(skiType);
         skiTypeManager.removeEntity(skiType2);
         System.out.println("elo przed writem");
-        skiTypeManager.writeToFile();
+        try {
+            skiTypeManager.writeToFile();    
+        } catch (WritingException e)
+        {
+            System.out.println("Problem z czytaniem");
+            return;
+        }
+        
+        
         System.out.println("elo po writiece");
-        skiTypeManager.readFromFile();
+        try {
+            skiTypeManager.readFromFile();
+        } catch (ReadingException e)
+        {
+            System.out.println("Problem z pisaniem");
+            return;
+        }
+
         System.out.println("elo na koncu");
 
 
@@ -42,6 +65,6 @@ public class Main
 //        {
 //            throw new RuntimeException(e);
 //        }
-
+        System.out.println("Main End");
     }
 }

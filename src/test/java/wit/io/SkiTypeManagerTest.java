@@ -1,6 +1,8 @@
 package wit.io;
 
 import exceptions.EntityAlreadyPresent;
+import exceptions.ReadingException;
+import exceptions.WritingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import wit.io.data.SkiType;
@@ -16,12 +18,16 @@ class SkiTypeManagerTest
 
     @BeforeEach
     public void setUp() {
-        manager = new SkiTypeManager("src/test/java/wit/io/datasources/SkiType");
-        manager.resetEntityData();
+        try {
+            manager = new SkiTypeManager("src/test/java/wit/io/datasources/SkiType");
+            manager.resetEntityData();
+        } catch (WritingException | ReadingException e) {
+            fail(e.getMessage());
+        }
     }
 
     @Test
-    public void givenSkiTypeExists_whenAddingNewType_thenThrowSkiTypeAlreadyPresentException() throws EntityAlreadyPresent{
+    public void givenSkiTypeExists_whenAddingNewType_thenThrowSkiTypeAlreadyPresentException() throws EntityAlreadyPresent, WritingException{
         manager.addEntity(new SkiType("hello1", "world1"));
 
         assertThrows(
@@ -72,7 +78,7 @@ class SkiTypeManagerTest
     }
 
     @Test
-    public void givenEntityDataExists_whenCreatingNewSkiTypeManager_thenSkiDataIsLoadedSuccessfully() {
+    public void givenEntityDataExists_whenCreatingNewSkiTypeManager_thenSkiDataIsLoadedSuccessfully() throws ReadingException {
         // given
         List<SkiType> listOfSkis = new ArrayList<>(List.of(
                 new SkiType("newName1", "aaa1"),

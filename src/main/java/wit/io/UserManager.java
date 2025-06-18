@@ -2,29 +2,29 @@ package wit.io;
 
 import exceptions.UserAlreadyPresent;
 import exceptions.UserNotPresent;
-import wit.io.data.User;
+import wit.io.data.Client;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserManager {
-    private List<User> users = new ArrayList<>();
+    private List<Client> clients = new ArrayList<>();
 
-    public List<User> getUsers() {
-        return users;
+    public List<Client> getUsers() {
+        return clients;
     }
 
-    public void setUsers(List<User> Users) {
-        this.users = Users;
+    public void setUsers(List<Client> clients) {
+        this.clients = clients;
     }
 
 
     public UserManager() {
     }
 
-    public UserManager(List<User> Users) {
+    public UserManager(List<Client> clients) {
         this();
-        this.users = Users;
+        this.clients = clients;
     }
 
     public void addUser(String firstName, String lastName, int docId, String description) throws UserAlreadyPresent {
@@ -32,8 +32,8 @@ public class UserManager {
             throw new UserAlreadyPresent("Exception occurred adding new User.");
         }
 
-        User newUser = new User(firstName, lastName, docId, description);
-        users.add(newUser);
+        Client newClient = new Client(firstName, lastName, docId, description);
+        clients.add(newClient);
         // todo: save/override user files here?
     }
 
@@ -52,7 +52,7 @@ public class UserManager {
 
 
     private boolean UserExists(int docId) {
-        for (User type : users) {
+        for (Client type : clients) {
             if (type.getDocId() == docId)
                 return true;
         }
