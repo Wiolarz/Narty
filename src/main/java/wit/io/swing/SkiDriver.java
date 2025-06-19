@@ -101,11 +101,11 @@ class SkiDriver {
 
     //endregion Init
 
-    private interface searchableTab<E> {
+    private interface searchableTab<E extends Writeable> {
         void found(E selectedObject) throws Exception;
     }
 
-    private static class SearchedPositionButton<E> extends Button implements ActionListener {
+    private static class SearchedPositionButton<E extends Writeable> extends Button implements ActionListener {
         E storedEntity;
         searchableTab tab;
 
