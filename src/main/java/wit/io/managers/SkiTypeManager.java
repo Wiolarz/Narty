@@ -58,15 +58,13 @@ public class SkiTypeManager extends Manager<SkiType> {
         Stream<SkiType> stream = getEntities().stream();
 
         if(nameSuffix != null) {
-            stream = stream.filter(ski -> ski.getName().toLowerCase().startsWith(nameSuffix.toLowerCase()));
+            stream = stream.filter(ski -> Util.startsWithString(ski.getName(), nameSuffix));
         }
 
         if(partialDescription != null) {
-            stream = stream.filter(ski -> ski.getDescription().toLowerCase().contains(partialDescription.toLowerCase()));
+            stream = stream.filter(ski -> Util.containsString(ski.getDescription(), partialDescription));
         }
 
         return stream.collect(Collectors.toCollection(ArrayList::new));
-
-        // todo: test: stream w pierwszym ifie zwróci 0 elementów
     }
 }

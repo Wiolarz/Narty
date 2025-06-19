@@ -59,7 +59,6 @@ public abstract class Manager<T> {
         }
         removeEntity(oldEntity);
         addEntity(newEntity);
-        writeToFile();
 
     }
 
