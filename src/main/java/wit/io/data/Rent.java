@@ -34,7 +34,7 @@ public class Rent implements Writeable {
         // status can be null, when initializing new Rent and will be set while adding new object
         // but status can be set when loading previously saved object
         this.status = status;
-        this.updatedEndDate = updatedEndDate == null ? endDate;
+        this.updatedEndDate = updatedEndDate == null ? endDate : updatedEndDate;
     }
 
     @Override
@@ -73,6 +73,7 @@ public class Rent implements Writeable {
         output.writeUTF(String.valueOf(docID));
         output.writeUTF(Util.dateToString(startDate));
         output.writeUTF(Util.dateToString(endDate));
+        output.writeUTF(Util.dateToString(updatedEndDate));
         output.writeUTF(comment);
         output.writeUTF(status.name());
     }
@@ -80,24 +81,25 @@ public class Rent implements Writeable {
     public static Rent readData(DataInputStream input) throws IOException {
         Integer skiID = input.readInt();
         Integer clientID = input.readInt();
-        Date startDate, endDate;
+        Date startDate, endDate, updatedEndDate;
         try {
             startDate = Util.stringToDate(input.readUTF());
             endDate = Util.stringToDate(input.readUTF());
+            updatedEndDate = Util.stringToDate(input.readUTF());
         } catch (ParseException e) {
             throw new IOException(e.getMessage());
         }
         String comment = input.readUTF();
         RentStatus rentStatus = RentStatus.valueOf(input.readUTF());
 
-        return new Rent(startDate, endDate, skiID, clientID, comment, rentStatus);
+        return new Rent(startDate, endDate, updatedEndDate, skiID, clientID, comment, rentStatus);
     }
 
     public Rent setStatus(RentStatus newStatus) {
         return new Rent(startDate, endDate, updatedEndDate, skiID, docID, comment, newStatus);
     }
 
-    public Rent setUpdatedEndDate(RentStatus newUpdatedEndDate) {
+    public Rent setUpdatedEndDate(Date newUpdatedEndDate) {
         return new Rent(startDate, endDate, newUpdatedEndDate, skiID, docID, comment, status);
     }
 

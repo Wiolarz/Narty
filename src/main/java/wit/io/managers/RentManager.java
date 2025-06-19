@@ -14,16 +14,14 @@ import java.util.stream.Stream;
 public class RentManager extends Manager<Rent> {
     public RentManager(String filePath) throws ReadingException, SkiAppException {
         super(filePath);
-        // TODO: przy starcie programu (read z pliku)
-        // ACTIVE -> FAILED
+
         Date now = new Date();
 
         // (1) set OVERDUE
         for (Rent rent : dataEntities) {
             // istnieje ACTIVE, który ma endDat < now i jesteśmy active
             if (rent.getStatus() == RentStatus.ACTIVE && rent.getEndDate().before(now)) {
-                // TODO: add new field: updatedEndDate and change it here
-                editEntity(rent, rent.setStatus(RentStatus.OVERDUE));
+                setRentOverdue(rent, now);
             }
         }
 
@@ -49,7 +47,7 @@ public class RentManager extends Manager<Rent> {
 
 
     static boolean rentDatesOverlap(Rent rent, Rent otherRent) {
-        return !(rent.getEndDate().before(otherRent.getStartDate()) || rent.getStartDate().after(otherRent.getEndDate()));
+        return !(rent.getUpdatedEndDate().before(otherRent.getStartDate()) || rent.getStartDate().after(otherRent.getUpdatedEndDate()));
     }
 
     void validateRent(Rent rent) throws InvalidRentDateException, OverlappingRentDateException {
@@ -67,7 +65,6 @@ public class RentManager extends Manager<Rent> {
         }
     }
 
-    // TODO: checks for updatedEndDate instead of endDate!
     @Override
     public void addEntity(Rent newRent)
             throws EntityAlreadyPresentException, WritingException, InvalidRentDateException, OverlappingRentDateException, SkiAppException {
@@ -85,7 +82,6 @@ public class RentManager extends Manager<Rent> {
         super.addEntity(newRent);
     }
 
-    // TODO: checks for updatedEndDate instead of endDate!
     public void editEntity(Rent oldRent, Rent newRent)
             throws EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException, SkiAppException {
         if (Util.isAnyArgumentNull(oldRent, newRent)) {
@@ -101,20 +97,52 @@ public class RentManager extends Manager<Rent> {
         super.addEntity(newRent);
     }
 
-
-    public ArrayList<Rent> search(String nameSuffix, String partialDescription) {
-        Stream<Rent> stream = getEntities().stream();
-
-        if(nameSuffix != null) {
-            //stream = stream.filter(ski -> ski.getName().toLowerCase().startsWith(nameSuffix.toLowerCase()));
+    public void setRentOverdue(Rent rent, Date now)
+            throws EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException, SkiAppException {
+        if (Util.isAnyArgumentNull(rent)) {
+            throw new IllegalArgumentException("One or more of given arguments were null.");
         }
 
-        if(partialDescription != null) {
-            //stream = stream.filter(ski -> ski.getDescription().toLowerCase().contains(partialDescription.toLowerCase()));
+        Rent updatedRent = rent.setStatus(RentStatus.OVERDUE).setUpdatedEndDate(now);
+        removeEntity(rent);
+        // don't use this.addEntity, because it will always set status to ACTIVE
+        // and perform same validations again
+        super.addEntity(updatedRent);
+    }
+
+
+    public ArrayList<Rent> search(Integer skiId, Integer docId, Date startDate, Date endDate, Date updatedEndDate, String comment, RentStatus status) {
+        Stream<Rent> stream = getEntities().stream();
+
+        if(skiId != null) {
+            stream = stream.filter(rent -> rent.getSkiID().equals(skiId));
+        }
+
+        if(docId != null) {
+            stream = stream.filter(rent -> rent.getClientID().equals(docId));
+        }
+
+        if(startDate != null) {
+            stream = stream.filter(rent -> !rent.getStartDate().before(startDate));
+        }
+
+        if(endDate != null) {
+            stream = stream.filter(rent -> !rent.getStartDate().after(endDate));
+        }
+
+        if(updatedEndDate != null) {
+            stream = stream.filter(rent -> !rent.getStartDate().after(updatedEndDate));
+        }
+
+        if(comment != null) {
+            stream = stream.filter(rent -> Util.containsString(rent.getComment(), comment));
+        }
+
+        if(status != null) {
+            stream = stream.filter(rent -> rent.getStatus().equals(status));
         }
 
         return stream.collect(Collectors.toCollection(ArrayList::new));
 
-        // todo: test: stream w pierwszym ifie zwróci 0 elementów
     }
 }
