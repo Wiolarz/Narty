@@ -39,7 +39,7 @@ class SkiDriver {
 
     //region Init
 
-    private static boolean managersSetup() throws EntityAlreadyPresentException, WritingException {
+    private static boolean managersSetup() throws SkiAppException {
         try {
             skiTypeManager = new SkiTypeManager(Const.SkiTypeFilePath);
             skiManager = new SkiManager(Const.SkiFilePath);
@@ -56,7 +56,7 @@ class SkiDriver {
         return true;
     }
 
-    private static void populateData() throws EntityAlreadyPresentException, WritingException {
+    private static void populateData() throws SkiAppException {
         skiManager.resetEntityData();
         skiTypeManager.resetEntityData();
 
