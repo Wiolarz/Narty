@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 public class Util {
@@ -19,13 +20,9 @@ public class Util {
         return formatter.format(date);
     }
 
-    public static Date stringToDate(String string) throws IOException {
-        try {
-            DateFormat formatter = new SimpleDateFormat(Const.DateFormat);
-            return formatter.parse(string);
-        } catch (Exception e) {
-            throw new IOException(e.getMessage());
-        }
+    public static Date stringToDate(String string) throws ParseException {
+        DateFormat formatter = new SimpleDateFormat(Const.DateFormat);
+        return formatter.parse(string);
     }
 
     // checks whether the first string contains the second string.
@@ -38,6 +35,35 @@ public class Util {
     // NOT CASE SENSITIVE
     public static boolean startsWithString(String string1, String string2) {
         return string1.toLowerCase().startsWith(string2.toLowerCase());
+    }
+
+    public static boolean isDateRangeValid(Date startDate, Date endDate) {
+        // validate date if
+        // startDate >= now(),
+        // endDate <= 5 years ahead
+        // end-start to max 0.5 years
+        // startDate <= endDate
+
+        if(startDate == null || endDate == null) {
+            return false;
+        }
+
+        Date now = new Date();
+
+        Calendar calendar = Calendar.getInstance();
+
+        calendar.setTime(now);
+        calendar.add(Calendar.YEAR, 5);
+        Date fiveYearLimit = calendar.getTime();
+
+        calendar.setTime(startDate);
+        calendar.add(Calendar.MONTH, 6);
+        Date sixMonthDurationLimit = calendar.getTime();
+
+        return !startDate.before(now) ||
+                !startDate.after(endDate) ||
+                !endDate.after(fiveYearLimit) ||
+                !endDate.after(sixMonthDurationLimit);
     }
 
 }
