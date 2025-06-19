@@ -1,71 +1,64 @@
 
-import wit.io.exceptions.EntityAlreadyPresentException;
-import wit.io.exceptions.EntityNotPresentException;
-import wit.io.exceptions.ReadingException;
-import wit.io.exceptions.WritingException;
+import wit.io.data.Rent;
+import wit.io.data.Ski;
+import wit.io.data.enums.RentStatus;
+import wit.io.exceptions.*;
+import wit.io.managers.RentManager;
+import wit.io.managers.SkiManager;
 import wit.io.utils.Const;
 import wit.io.managers.SkiTypeManager;
 import wit.io.data.SkiType;
 
+import java.util.Date;
 
-public class Main
-{
-    public static void main(String[] args) throws EntityAlreadyPresentException, EntityNotPresentException, WritingException {
-        System.out.println("Main Start");
 
-        SkiTypeManager skiTypeManager;
+public class Main {
+    static SkiTypeManager skiTypeManager;
+    static SkiManager skiManager;
+    private static boolean managersSetup() throws SkiAppException {
         try {
             skiTypeManager = new SkiTypeManager(Const.SkiTypeFilePath);
+            System.out.println("pierwszy git");
+            skiManager = new SkiManager(Const.SkiFilePath);
         } catch (ReadingException e)
         {
             System.out.println("Failed to create Manager");
-            return;
+            return false;
         }
 
-        SkiType skiType = new SkiType("hello", "world");
+        skiManager.resetEntityData();
+        skiTypeManager.resetEntityData();
+
+        populateData();
+        return true;
+    }
+
+    private static void populateData() throws SkiAppException {
+        skiManager.resetEntityData();
+        skiTypeManager.resetEntityData();
+
+        SkiType skiType1 = new SkiType("hello", "world");
         SkiType skiType2 = new SkiType("kill", "mee");
-        skiTypeManager.addEntity(skiType);
+        skiTypeManager.addEntity(skiType1);
         skiTypeManager.addEntity(skiType2);
-        skiTypeManager.removeEntity(skiType);
-        skiTypeManager.removeEntity(skiType2);
-        System.out.println("elo przed writem");
-        try {
-            skiTypeManager.writeToFile();    
-        } catch (WritingException e)
-        {
-            System.out.println("Problem z czytaniem");
-            return;
-        }
-        
-        
-        System.out.println("elo po writiece");
-        try {
-            skiTypeManager.readFromFile();
-        } catch (ReadingException e)
-        {
-            System.out.println("Problem z pisaniem");
-            return;
-        }
-
-        System.out.println("elo na koncu");
 
 
-//        try
-//        {
-//            DataOutputStream dataOutputStream = new DataOutputStream(new FileOutputStream(""));
-//        } catch (FileNotFoundException e)
-//        {
-//            throw new RuntimeException(e);
-//        }
-//
-//
-//        try
-//        {
-//            DataInputStream dataInputStream = new DataInputStream(new FileInputStream(""));
-//        } catch (FileNotFoundException e)
-//        {
-//            throw new RuntimeException(e);
-//        }
-        System.out.println("Main End");
+        Ski ski1 = new Ski(skiType1, "marka_a", "super", "ekstra", 10f);
+        Ski ski2 = new Ski(skiType2, "marka_b", "kiepski", "zwykle", 20f);
+        Ski ski3 = new Ski(skiType1, "marka_c", "kiepski", "zwykle", 5f);
+        Ski ski4 = new Ski(skiType2, "marka_d", "kiepski", "zwykle", 3f);
+        Ski ski5 = new Ski(skiType1, "marka_e", "kiepski", "ekstra", 50f);
+        skiManager.addEntity(ski1);
+        skiManager.addEntity(ski2);
+        skiManager.addEntity(ski3);
+        skiManager.addEntity(ski4);
+        skiManager.addEntity(ski5);
+
+    }
+
+
+    public static void main(String[] args) throws EntityAlreadyPresentException, ReadingException, WritingException, EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException, SkiAppException {
+        RentManager rentManager = new RentManager("src/main/java/wit/io/datasources/rent");
+        rentManager.addEntity(new Rent(new Date(2025, 06, 10), new Date(2025, 06, 15), 10, 10, "", RentStatus.ACTIVE));
     }
 }
