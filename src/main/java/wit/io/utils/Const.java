@@ -4,6 +4,7 @@ public enum Const {
     ;
     public static final String DateFormat = "dd-MM-yyyy";
     public static final String SkiTypeFilePath = "src/main/java/wit/io/datasources/SkiType";
+    public static final String SkiFilePath = "src/main/java/wit/io/datasources/Ski";
 
 
 }
