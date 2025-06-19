@@ -1,8 +1,13 @@
 package wit.io.data;
 
 import wit.io.utils.Util;
+import wit.io.utils.Writeable;
 
-public class Client {
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
+public class Client implements Writeable {
     private final Integer docId;
     private final String firstName;
     private final String lastName;
@@ -40,6 +45,22 @@ public class Client {
         }
 
         return ((Client) obj).docId.equals(docId);
+    }
+
+    public void writeData(DataOutputStream output) throws IOException {
+        output.writeInt(getDocId());
+        output.writeUTF(getFirstName());
+        output.writeUTF(getLastName());
+        output.writeUTF(getDescription());
+    }
+
+    public static Client readData(DataInputStream input) throws IOException {
+        Integer docId = input.readInt();
+        String firstName = input.readUTF();
+        String lastName = input.readUTF();
+        String description = input.readUTF();
+
+        return new Client(docId, firstName, lastName, description);
     }
 
 

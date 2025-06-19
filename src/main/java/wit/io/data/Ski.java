@@ -1,11 +1,15 @@
 package wit.io.data;
 
 import wit.io.utils.Util;
+import wit.io.utils.Writeable;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Objects;
 
 // (typ, marka, model, wiązania, długość)
-public class Ski {
+public class Ski implements Writeable {
     /*
     Ewidencja typów nart (lista) i wprowadzanie nowego typu nart (nazwa, opis), edycja, usuwanie.
 
@@ -59,6 +63,27 @@ public class Ski {
                 ", bonds='" + bonds + '\'' +
                 ", length=" + length +
                 '}';
+    }
+
+    public void writeData(DataOutputStream output) throws IOException {
+        output.writeUTF(type.getName());
+        output.writeUTF(type.getDescription());
+        output.writeUTF(brand);
+        output.writeUTF(model);
+        output.writeUTF(bonds);
+        output.writeFloat(length);
+    }
+
+    public static Ski readData(DataInputStream input) throws IOException {
+        String typeName = input.readUTF();
+        String typeDescription = input.readUTF();
+        String brand = input.readUTF();
+        String model = input.readUTF();
+        String bonds = input.readUTF();
+        Float length = input.readFloat();
+
+        SkiType skiType = new SkiType(typeName, typeDescription);
+        return new Ski(skiType, brand, model, bonds, length);
     }
 
     public int getId() {

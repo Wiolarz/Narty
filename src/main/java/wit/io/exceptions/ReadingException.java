@@ -1,4 +1,4 @@
-package exceptions;
+package wit.io.exceptions;
 
 public class ReadingException extends SkiAppException {
     public ReadingException() {

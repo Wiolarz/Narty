@@ -1,4 +1,4 @@
-package exceptions;
+package wit.io.exceptions;
 
 public abstract class SkiAppException extends Exception{
     public SkiAppException(String message) {}

@@ -1,20 +1,23 @@
 package wit.io.managers;
 
-import exceptions.*;
+import wit.io.data.Client;
+import wit.io.exceptions.EntityAlreadyPresentException;
+import wit.io.exceptions.EntityNotPresentException;
+import wit.io.exceptions.ReadingException;
+import wit.io.exceptions.WritingException;
+import wit.io.utils.IOThrowableFunction;
 import wit.io.utils.Util;
+import wit.io.utils.Writeable;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-
 // TODO: SWING
-public abstract class Manager<T> {
+public abstract class Manager<T extends Writeable> {
     protected List<T> dataEntity;
     protected String filePath;
 
-    public abstract void writeToFile() throws WritingException;
-
-    // ran only once per manager, at the start of the program
     public abstract void readFromFile() throws ReadingException;
 
     public Manager(String filePath) throws ReadingException{
@@ -22,6 +25,33 @@ public abstract class Manager<T> {
         this.filePath = filePath;
         readFromFile();
     }
+
+    public void writeToFile() throws WritingException {
+        try (DataOutputStream output =
+                     new DataOutputStream(new FileOutputStream(filePath))) {
+            output.writeInt(dataEntity.size());
+            for (T entity : dataEntity) {
+                entity.writeData(output);
+            }
+        } catch (IOException e) {
+            throw new WritingException(e);
+        }
+
+    }
+
+    // TODO: ran only once per manager, at the start of the program
+    protected void readFromFile(IOThrowableFunction<DataInputStream, T> readFunc) throws ReadingException{
+        try (DataInputStream input =
+                     new DataInputStream(new FileInputStream(filePath))) {
+            int dataLength = input.readInt();
+            for (int i = 0; i < dataLength; i++) {
+                dataEntity.add(readFunc.apply(input));
+            }
+        } catch(IOException e){
+            throw new ReadingException(e);
+        }
+    }
+
     public void resetEntityData() throws WritingException{
         dataEntity = new ArrayList<>();
         writeToFile();

@@ -1,8 +1,13 @@
 package wit.io.data;
 
 import wit.io.utils.Util;
+import wit.io.utils.Writeable;
 
-public class SkiType {
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
+public class SkiType implements Writeable {
     private final String name;
     private final String description;
 
@@ -34,6 +39,17 @@ public class SkiType {
         }
 
         return ((SkiType) obj).name.equals(name);
+    }
+
+    public void writeData(DataOutputStream output) throws IOException {
+        output.writeUTF(name);
+        output.writeUTF(description);
+    }
+
+    public static SkiType readData(DataInputStream input) throws IOException {
+        String name = input.readUTF();
+        String description = input.readUTF();
+        return new SkiType(name, description);
     }
 
     public String getName() {

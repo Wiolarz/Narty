@@ -1,8 +1,8 @@
 
-import exceptions.EntityAlreadyPresentException;
-import exceptions.EntityNotPresentException;
-import exceptions.ReadingException;
-import exceptions.WritingException;
+import wit.io.exceptions.EntityAlreadyPresentException;
+import wit.io.exceptions.EntityNotPresentException;
+import wit.io.exceptions.ReadingException;
+import wit.io.exceptions.WritingException;
 import wit.io.utils.Const;
 import wit.io.managers.SkiTypeManager;
 import wit.io.data.SkiType;

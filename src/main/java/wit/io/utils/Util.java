@@ -1,7 +1,6 @@
 package wit.io.utils;
 
-import exceptions.SkiAppException;
-
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -20,9 +19,13 @@ public class Util {
         return formatter.format(date);
     }
 
-    public static Date stringToDate(String string) throws ParseException {
-        DateFormat formatter = new SimpleDateFormat(Const.DateFormat);
-        return formatter.parse(string);
+    public static Date stringToDate(String string) throws IOException {
+        try {
+            DateFormat formatter = new SimpleDateFormat(Const.DateFormat);
+            return formatter.parse(string);
+        } catch (Exception e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
     // checks whether the first string contains the second string.

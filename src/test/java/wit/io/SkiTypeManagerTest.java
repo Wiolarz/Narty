@@ -1,9 +1,9 @@
 package wit.io;
 
-import exceptions.EntityAlreadyPresentException;
-import exceptions.EntityNotPresentException;
-import exceptions.ReadingException;
-import exceptions.WritingException;
+import wit.io.exceptions.EntityAlreadyPresentException;
+import wit.io.exceptions.EntityNotPresentException;
+import wit.io.exceptions.ReadingException;
+import wit.io.exceptions.WritingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import wit.io.data.SkiType;

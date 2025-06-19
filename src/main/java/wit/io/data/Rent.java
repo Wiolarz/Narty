@@ -2,12 +2,16 @@ package wit.io.data;
 
 import wit.io.data.enums.RentStatus;
 import wit.io.utils.Util;
+import wit.io.utils.Writeable;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Objects;
 
-public class Rent {
+public class Rent implements Writeable {
     private final Integer rentID;
     private final Integer skiID;
     private final Integer clientID;
@@ -16,7 +20,7 @@ public class Rent {
     private final String comment;
     private final RentStatus status;
 
-    public Rent(Date startDate, Date endDate, Integer skiID, Integer clientID, String comments, RentStatus status) throws Exception {
+    public Rent(Date startDate, Date endDate, Integer skiID, Integer clientID, String comments, RentStatus status) throws IOException {
         if (Util.isAnyArgumentNull(endDate, skiID, clientID)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
@@ -63,6 +67,26 @@ public class Rent {
         return ((Rent) o).hashCode() == (o.hashCode());
     }
 
+    public void writeData(DataOutputStream output) throws IOException {
+        output.writeUTF(String.valueOf(skiID));
+        output.writeUTF(String.valueOf(clientID));
+        output.writeUTF(Util.dateToString(startDate));
+        output.writeUTF(Util.dateToString(endDate));
+        output.writeUTF(comment);
+        output.writeUTF(status.name());
+    }
+
+    public static Rent readData(DataInputStream input) throws IOException {
+        Integer skiID = input.readInt();
+        Integer clientID = input.readInt();
+        Date startDate = Util.stringToDate(input.readUTF());
+        Date endDate = Util.stringToDate(input.readUTF());
+        String comment = input.readUTF();
+        RentStatus rentStatus = RentStatus.valueOf(input.readUTF());
+
+        return new Rent(startDate, endDate, skiID, clientID, comment, rentStatus);
+    }
+
     public Integer getRentID() {
         return rentID;
     }
@@ -70,7 +94,6 @@ public class Rent {
     public RentStatus getStatus() {
         return status;
     }
-
 
     public Date getStartDate() {
         return startDate;

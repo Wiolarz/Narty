@@ -1,7 +1,8 @@
 package wit.io.managers;
 
-import exceptions.ReadingException;
-import exceptions.WritingException;
+import wit.io.data.Client;
+import wit.io.exceptions.ReadingException;
+import wit.io.exceptions.WritingException;
 import wit.io.data.SkiType;
 import wit.io.utils.Util;
 
@@ -17,40 +18,8 @@ public class SkiTypeManager extends Manager<SkiType> {
     }
 
     @Override
-    public void writeToFile() throws WritingException {
-        // writes skiTypes to file (override)
-        try (DataOutputStream output =
-                 new DataOutputStream(new FileOutputStream(filePath))) {
-
-            output.writeInt(dataEntity.size());
-            for (SkiType type : dataEntity) {
-                output.writeUTF(type.getName());
-                output.writeUTF(type.getDescription());
-            }
-
-        } catch (IOException e) {
-            throw new WritingException(e);
-        }
-
-    }
-
-    @Override
-    public void readFromFile() throws ReadingException{
-        // ran only once per manager, at the start of the program
-        try (DataInputStream input =
-                     new DataInputStream(new FileInputStream(filePath))) {
-            int dataLength = input.readInt();
-            for (int i = 0; i < dataLength; i++) {
-                String name = input.readUTF();
-                String description = input.readUTF();
-                SkiType skiType = new SkiType(name, description);
-
-                dataEntity.add(skiType);
-            }
-
-        }catch(IOException e){
-            throw new ReadingException(e);
-        }
+    public void readFromFile() throws ReadingException {
+        readFromFile(SkiType::readData);
     }
 
 
