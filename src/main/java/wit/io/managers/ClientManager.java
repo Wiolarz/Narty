@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
+// TODO: override addEntity - validate if docId is unique
 public class ClientManager extends Manager<Client> {
     public ClientManager(String filePath) throws ReadingException {
         super(filePath);

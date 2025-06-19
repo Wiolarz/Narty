@@ -1,10 +1,6 @@
 package wit.io.managers;
 
-import wit.io.data.Client;
-import wit.io.exceptions.EntityAlreadyPresentException;
-import wit.io.exceptions.EntityNotPresentException;
-import wit.io.exceptions.ReadingException;
-import wit.io.exceptions.WritingException;
+import wit.io.exceptions.*;
 import wit.io.utils.IOThrowableFunction;
 import wit.io.utils.Util;
 import wit.io.utils.Writeable;
@@ -15,22 +11,30 @@ import java.util.List;
 
 // TODO: SWING
 public abstract class Manager<T extends Writeable> {
-    protected List<T> dataEntity;
-    protected String filePath;
+    protected List<T> dataEntities;
+    protected File file;
 
     public abstract void readFromFile() throws ReadingException;
 
     public Manager(String filePath) throws ReadingException{
-        dataEntity = new ArrayList<>();
-        this.filePath = filePath;
+        if(Util.isAnyArgumentNull(filePath)) {
+            throw new IllegalArgumentException("filePath cannot be null");
+        }
+
+        file = new File(filePath);
+        dataEntities = new ArrayList<>();
+
+        if(!file.exists()) {
+            return;
+        }
         readFromFile();
     }
 
     public void writeToFile() throws WritingException {
         try (DataOutputStream output =
-                     new DataOutputStream(new FileOutputStream(filePath))) {
-            output.writeInt(dataEntity.size());
-            for (T entity : dataEntity) {
+                     new DataOutputStream(new FileOutputStream(file))) {
+            output.writeInt(dataEntities.size());
+            for (T entity : dataEntities) {
                 entity.writeData(output);
             }
         } catch (IOException e) {
@@ -41,11 +45,15 @@ public abstract class Manager<T extends Writeable> {
 
     // TODO: ran only once per manager, at the start of the program
     protected void readFromFile(IOThrowableFunction<DataInputStream, T> readFunc) throws ReadingException{
+        if(!file.exists()) {
+            return;
+        }
+
         try (DataInputStream input =
-                     new DataInputStream(new FileInputStream(filePath))) {
+                     new DataInputStream(new FileInputStream(file))) {
             int dataLength = input.readInt();
             for (int i = 0; i < dataLength; i++) {
-                dataEntity.add(readFunc.apply(input));
+                dataEntities.add(readFunc.apply(input));
             }
         } catch(IOException e){
             throw new ReadingException(e);
@@ -53,11 +61,11 @@ public abstract class Manager<T extends Writeable> {
     }
 
     public void resetEntityData() throws WritingException{
-        dataEntity = new ArrayList<>();
+        dataEntities = new ArrayList<>();
         writeToFile();
     }
 
-    public void addEntity(T newEntity) throws EntityAlreadyPresentException, WritingException {
+    public void addEntity(T newEntity) throws EntityAlreadyPresentException, WritingException, SkiAppException {
         if (Util.isAnyArgumentNull(newEntity)) {
             throw new IllegalArgumentException("newEntity cannot be null.");
         }
@@ -65,7 +73,7 @@ public abstract class Manager<T extends Writeable> {
             throw new EntityAlreadyPresentException("Exception occurred adding new newEntity Type." + newEntity.toString());
         }
 
-        dataEntity.add(newEntity);
+        dataEntities.add(newEntity);
         writeToFile();
     }
 
@@ -78,12 +86,12 @@ public abstract class Manager<T extends Writeable> {
             throw new EntityNotPresentException("Error removing e.");
         }
         // TODO: custom equals
-        dataEntity.removeIf(s -> s.equals(entity));
+        dataEntities.removeIf(s -> s.equals(entity));
         writeToFile();
     }
 
     public void editEntity(T oldEntity, T newEntity)
-            throws EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException {
+            throws EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException, SkiAppException {
         if (Util.isAnyArgumentNull(oldEntity, newEntity)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
@@ -93,12 +101,12 @@ public abstract class Manager<T extends Writeable> {
     }
 
     public List<T> getEntities() {
-        return dataEntity;
+        return dataEntities;
     }
 
 
     private boolean entityExists(T entity) {
-        for (T e : dataEntity) {
+        for (T e : dataEntities) {
             if (e.equals(entity))
                 return true;
         }
