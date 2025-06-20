@@ -12,9 +12,11 @@ import wit.io.utils.Const;
 import wit.io.utils.Writeable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxEditor;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.List;
 
 class SkiDriver {
 
@@ -127,6 +129,56 @@ class SkiDriver {
         return gbc;
     }
 
+
+    /**
+     * Indian homie helped us!
+     * <a href="https://www.tutorialspoint.com/how-can-we-implement-auto-complete-jcombobox-in-java">...</a>
+     */
+    static class AutoCompleteComboBox extends JComboBox {
+        public int caretPos = 0;
+        public JTextField tfield = null;
+        public AutoCompleteComboBox(final Object[] countries) {
+            super(countries);
+            setEditor(new BasicComboBoxEditor());
+            setEditable(true);
+        }
+        public void setSelectedIndex(int index) {
+            super.setSelectedIndex(index);
+            tfield.setText(getItemAt(index).toString());
+            tfield.setSelectionEnd(caretPos + tfield.getText().length());
+            tfield.moveCaretPosition(caretPos);
+        }
+        public void setEditor(ComboBoxEditor editor) {
+            super.setEditor(editor);
+            if(editor.getEditorComponent() instanceof JTextField) {
+                tfield = (JTextField) editor.getEditorComponent();
+                tfield.addKeyListener(new KeyAdapter() {
+                    public void keyReleased(KeyEvent ke) {
+                        char key = ke.getKeyChar();
+                        if (!(Character.isLetterOrDigit(key) || Character.isSpaceChar(key) )) return;
+                        caretPos = tfield.getCaretPosition();
+                        String text="";
+                        try {
+                            text = tfield.getText(0, caretPos);
+                        } catch (javax.swing.text.BadLocationException e) {
+                            e.printStackTrace();
+                        }
+                        for (int i=0; i < getItemCount(); i++) {
+                            String element = (String) getItemAt(i);
+                            if (element.startsWith(text)) {
+                                setSelectedIndex(i);
+                                return;
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+
+
+
     //endregion Helpers
 
 
@@ -209,8 +261,6 @@ class SkiDriver {
         public final void selectedItem(E selectedEntity) {
             entityPanel.entityLoaded(selectedEntity);
         }
-
-
     }
 
 
@@ -241,15 +291,6 @@ class SkiDriver {
         E selectedEntity;
         M manager;
         GenericAppTab<E, M> parent;
-
-        abstract protected void onCreation();
-
-        //TODO make sure you cannot more nicely force entity panel creation
-         EntityPanel(M manager_, GenericAppTab<E, M> parent_){
-             this.manager = manager_;
-             this.parent = parent_;
-             onCreation();
-         }
 
         final protected void repeatSearch() {
             parent.repeatSearch();
@@ -326,26 +367,26 @@ class SkiDriver {
         SkiTypeSearchPanel(SkiTypeManager manager_, SkiTypeAppTab parent_) {
             this.manager = manager_;
             this.parent = parent_;
-            setLayout(new GridBagLayout());
-
-            add(new JLabel("Name:"), createGbc(0, 0));
-            add(new JLabel("Description:"), createGbc(0, 1));
 
 
             this.searchNameTextField = new JTextField(16);
             this.searchDescriptionTextField = new JTextField(16);
 
-            add(this.searchNameTextField, createGbc(1, 0));
-            add(this.searchDescriptionTextField,  createGbc(1, 1));
-
-
             // button
             Button searchButton = new Button("search");
             // add action listener
             searchButton.addActionListener(this);
-            add(searchButton, createGbc(0, 2, 2));
 
             this.searchResultsPanel = new JPanel();
+
+
+            setLayout(new GridBagLayout());
+
+            add(new JLabel("Name:"), createGbc(0, 0));
+            add(new JLabel("Description:"), createGbc(0, 1));
+            add(this.searchNameTextField, createGbc(1, 0));
+            add(this.searchDescriptionTextField,  createGbc(1, 1));
+            add(searchButton, createGbc(0, 2, 2));
             add(searchResultsPanel, createGbc(0, 3));
 
             
@@ -391,11 +432,9 @@ class SkiDriver {
         JTextField selectedItemDescription;
 
         SkiTypeEntityPanel(SkiTypeManager manager_, SkiTypeAppTab parent_){
-            super(manager_, parent_);
-        }
+            this.manager = manager_;
+            this.parent = parent_;
 
-        @Override
-        protected void onCreation() {
 
             // Elements
             selectedItemName = new JTextField("");
@@ -489,11 +528,11 @@ class SkiDriver {
     //region Ski
 
     private static class SkiAppTab extends GenericAppTab<Ski, SkiManager> {
-        SkiAppTab(SkiManager manager_) {
+        SkiAppTab(SkiManager manager_, SkiTypeManager skiTypeManager) {
             searchPanel = new SkiSearchPanel(manager_, this);
             add(searchPanel);
 
-            entityPanel = new SkiEntityPanel(manager_, this);
+            entityPanel = new SkiEntityPanel(manager_, this, skiTypeManager);
             add(entityPanel);
         }
     }
@@ -509,26 +548,36 @@ class SkiDriver {
         SkiSearchPanel(SkiManager manager_, SkiAppTab parent_) {
             this.manager = manager_;
             this.parent = parent_;
-            setLayout(new GridBagLayout());
 
-            add(new JLabel("Name:"), createGbc(0, 0));
-            add(new JLabel("Description:"), createGbc(0, 1));
+
+            JLabel nameLabel = new JLabel("Name:");
+            JLabel descriptionLabel = new JLabel("Description:");
 
 
             this.searchNameTextField = new JTextField(16);
             this.searchDescriptionTextField = new JTextField(16);
 
-            add(this.searchNameTextField, createGbc(1, 0));
-            add(this.searchDescriptionTextField,  createGbc(1, 1));
-
-
             // button
             Button searchButton = new Button("search");
             // add action listener
             searchButton.addActionListener(this);
-            add(searchButton, createGbc(0, 2, 2));
 
             this.searchResultsPanel = new JPanel();
+
+
+            //LAYOUT
+            setLayout(new GridBagLayout());
+
+            add(nameLabel, createGbc(0, 0));
+            add(descriptionLabel, createGbc(0, 1));
+
+            add(this.searchNameTextField, createGbc(1, 0));
+            add(this.searchDescriptionTextField,  createGbc(1, 1));
+
+
+            add(searchButton, createGbc(0, 2, 2));
+
+
             add(searchResultsPanel, createGbc(0, 3));
 
 
@@ -571,15 +620,16 @@ class SkiDriver {
 
 
     private static class SkiEntityPanel extends EntityPanel<Ski, SkiManager>  {
+        SkiTypeManager skiTypeManager;
         JTextField selectedItemName;
         JTextField selectedItemDescription;
 
-        SkiEntityPanel(SkiManager manager_, SkiAppTab parent_){
-            super(manager_, parent_);
-        }
+        AutoCompleteComboBox comboBox;
 
-        @Override
-        protected void onCreation() {
+        SkiEntityPanel(SkiManager manager_, SkiAppTab parent_, SkiTypeManager skiTypeManager_){
+            this.manager = manager_;
+            this.parent = parent_;
+            this.skiTypeManager = skiTypeManager_;
 
             // Elements
             selectedItemName = new JTextField("");
@@ -587,8 +637,8 @@ class SkiDriver {
             selectedItemName.setPreferredSize( new Dimension(200, 24));
             selectedItemDescription.setPreferredSize( new Dimension(200, 24));
 
-            JLabel nameLabel = new JLabel("Name:  ");
-            JLabel descriptionLabel = new JLabel("Description:  ");
+            JLabel nameLabel = new JLabel("Brand:  ");
+            JLabel descriptionLabel = new JLabel("Model:  ");
 
 
             CreateNewEntityButton<Ski, SkiManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
@@ -599,6 +649,16 @@ class SkiDriver {
 
             DeleteEntityButton<Ski, SkiManager> deleteEntityButton = new DeleteEntityButton<>("Delete", this);
             deleteEntityButton.addActionListener(deleteEntityButton);
+
+
+            List<SkiType> skiTypes = this.skiTypeManager.getEntities();
+            String[] skiTypeNames = new String[skiTypes.size()];
+            for (int i = 0; i < skiTypes.size(); i++) {
+                skiTypeNames[i] = skiTypes.get(i).getName();
+            }
+
+            comboBox = new AutoCompleteComboBox(skiTypeNames);
+
 
 
             //Layout
@@ -641,16 +701,28 @@ class SkiDriver {
             gbc.gridwidth = 1;
 
 
+            //XD
             // Next Row -> Reset Postion
             gbc.gridy += 1;
             gbc.gridx = 0;
+            gbc.gridwidth = 3; // wider element
+            add(comboBox, gbc);
+            gbc.gridwidth = 1;
+            //XD
 
 
+            // Next Row -> Reset Postion
+            gbc.gridy += 1;
+            gbc.gridx = 0;
             add(createNewEntityButton, gbc);
             gbc.gridx += 1;
             add(editEntityButton, gbc);
             gbc.gridx += 1;
             add(deleteEntityButton, gbc);
+
+
+            //XD HERE XD
+
         }
 
 
@@ -703,19 +775,19 @@ class SkiDriver {
         }
 
         createMainFrame();
-        
+
         // reference to the main object
         driver = new SkiDriver();
 
         SkiTypeAppTab skiTypeAppTab = new SkiTypeAppTab(skiTypeManager);
 
-        SkiAppTab skiAppTab = new SkiAppTab(skiManager);
+        SkiAppTab skiAppTab = new SkiAppTab(skiManager, skiTypeManager);
 
 
         // Main Space
         tabSpace = new JPanel();
         tabSpace.add(skiAppTab); // TODO remember last selected tab by user
-        
+
 
         mainFrame.setLayout(new GridBagLayout());
 

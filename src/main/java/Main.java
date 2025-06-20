@@ -59,6 +59,6 @@ public class Main {
 
     public static void main(String[] args) throws EntityAlreadyPresentException, ReadingException, WritingException, EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException, SkiAppException {
         RentManager rentManager = new RentManager("src/main/java/wit/io/datasources/rent");
-        rentManager.addEntity(new Rent(new Date(2025, 06, 10), new Date(2025, 06, 15), 10, 10, "", RentStatus.ACTIVE));
+        //rentManager.addEntity(new Rent(new Date(2025, 06, 10), new Date(2025, 06, 15), 10, 10, "", RentStatus.ACTIVE));
     }
 }
