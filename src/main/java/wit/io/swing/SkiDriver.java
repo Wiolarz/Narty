@@ -194,8 +194,11 @@ class SkiDriver {
 
     //endregion Generic Tab elements
 
+
+    //region Generic Tab Core
+
     private static abstract class GenericAppTab<E extends Writeable, M extends Manager<E>> extends JPanel implements searchableTab<E> {
-        SearchPanel<E> searchPanel;
+        SearchPanel<E, M> searchPanel;
         EntityPanel<E, M> entityPanel;
 
 
@@ -209,10 +212,12 @@ class SkiDriver {
 
 
     }
-    private static abstract class SearchPanel<E extends Writeable> extends JPanel implements ActionListener  {
+
+
+    private static abstract class SearchPanel<E extends Writeable, M extends Manager<E>> extends JPanel implements ActionListener  {
         //TODO make use of generic manager to call search inside abstract class
         //TODO implement safer constructor
-        SkiTypeAppTab parent;
+        GenericAppTab<E, M> parent;
         JPanel searchResultsPanel;
         
         protected abstract ArrayList<E> performSearch(); // TODO make it even more secure, by forcing overriding of arguments collection
@@ -231,15 +236,16 @@ class SkiDriver {
         abstract void loadSearchResults(ArrayList<E> searchResults);
     }
 
+
     private static abstract class EntityPanel<E extends Writeable, M extends Manager<E>> extends JPanel {
         E selectedEntity;
         M manager;
-        SkiTypeAppTab parent;
+        GenericAppTab<E, M> parent;
 
         abstract protected void onCreation();
 
         //TODO make sure you cannot more nicely force entity panel creation
-         EntityPanel(M manager_, SkiTypeAppTab parent_){
+         EntityPanel(M manager_, GenericAppTab<E, M> parent_){
              this.manager = manager_;
              this.parent = parent_;
              onCreation();
@@ -293,6 +299,7 @@ class SkiDriver {
         }
     }
 
+    //endregion Generic Tab Core
 
 
     //region SkiType
@@ -308,7 +315,7 @@ class SkiDriver {
     }
     
     
-    private static class SkiTypeSearchPanel extends SearchPanel<SkiType> {
+    private static class SkiTypeSearchPanel extends SearchPanel<SkiType, SkiTypeManager> {
         // as search() can have any combination of types of arguments, it cannot be generalised //TODO verify if its true
         SkiTypeManager manager;
         
@@ -478,6 +485,191 @@ class SkiDriver {
     //endregion SkiType
 
 
+
+    //region Ski
+
+    private static class SkiAppTab extends GenericAppTab<Ski, SkiManager> {
+        SkiAppTab(SkiManager manager_) {
+            searchPanel = new SkiSearchPanel(manager_, this);
+            add(searchPanel);
+
+            entityPanel = new SkiEntityPanel(manager_, this);
+            add(entityPanel);
+        }
+    }
+
+    private static class SkiSearchPanel extends SearchPanel<Ski, SkiManager> {
+        // as search() can have any combination of types of arguments, it cannot be generalised //TODO verify if its true
+        SkiManager manager;
+
+        JTextField searchNameTextField;
+        JTextField searchDescriptionTextField;
+
+
+        SkiSearchPanel(SkiManager manager_, SkiAppTab parent_) {
+            this.manager = manager_;
+            this.parent = parent_;
+            setLayout(new GridBagLayout());
+
+            add(new JLabel("Name:"), createGbc(0, 0));
+            add(new JLabel("Description:"), createGbc(0, 1));
+
+
+            this.searchNameTextField = new JTextField(16);
+            this.searchDescriptionTextField = new JTextField(16);
+
+            add(this.searchNameTextField, createGbc(1, 0));
+            add(this.searchDescriptionTextField,  createGbc(1, 1));
+
+
+            // button
+            Button searchButton = new Button("search");
+            // add action listener
+            searchButton.addActionListener(this);
+            add(searchButton, createGbc(0, 2, 2));
+
+            this.searchResultsPanel = new JPanel();
+            add(searchResultsPanel, createGbc(0, 3));
+
+
+            // Show all items
+            ArrayList<Ski> results = skiManager.search(null, null, null, null, null, null);
+            loadSearchResults(results);
+        }
+
+        @Override
+        protected ArrayList<Ski> performSearch() {
+            //SkiType type, String brand, String model, String bonds, Float minLength, Float maxLength  //TODO fix
+            return manager.search(null, null, null, null, null, null);
+        }
+
+
+        public void loadSearchResults(ArrayList<Ski> searchResults) {
+            searchResultsPanel.removeAll();
+
+            int number_of_results = searchResults.size();
+            if (number_of_results == 0) {
+                number_of_results = 1;  // Grid layout cannot be set to 0
+                JLabel noResultsLabel = new JLabel("No results");
+                searchResultsPanel.add(noResultsLabel);
+
+            }
+
+            searchResultsPanel.setLayout(new GridLayout(number_of_results, 1));
+            for (Ski skiItem : searchResults) {
+                System.out.println(skiItem.toString());
+                SearchedPositionButton<Ski> skiResult = new SearchedPositionButton<>(skiItem.toString(), skiItem, parent);
+
+                skiResult.addActionListener(skiResult);
+
+                searchResultsPanel.add(skiResult);
+            }
+            driver.refresh();
+            System.out.println("End of Search");
+        }
+    }
+
+
+    private static class SkiEntityPanel extends EntityPanel<Ski, SkiManager>  {
+        JTextField selectedItemName;
+        JTextField selectedItemDescription;
+
+        SkiEntityPanel(SkiManager manager_, SkiAppTab parent_){
+            super(manager_, parent_);
+        }
+
+        @Override
+        protected void onCreation() {
+
+            // Elements
+            selectedItemName = new JTextField("");
+            selectedItemDescription = new JTextField("");
+            selectedItemName.setPreferredSize( new Dimension(200, 24));
+            selectedItemDescription.setPreferredSize( new Dimension(200, 24));
+
+            JLabel nameLabel = new JLabel("Name:  ");
+            JLabel descriptionLabel = new JLabel("Description:  ");
+
+
+            CreateNewEntityButton<Ski, SkiManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
+            createNewEntityButton.addActionListener(createNewEntityButton);
+
+            EditEntityButton<Ski, SkiManager> editEntityButton = new EditEntityButton<>("Edit", this);
+            editEntityButton.addActionListener(editEntityButton);
+
+            DeleteEntityButton<Ski, SkiManager> deleteEntityButton = new DeleteEntityButton<>("Delete", this);
+            deleteEntityButton.addActionListener(deleteEntityButton);
+
+
+            //Layout
+
+
+            setLayout(new GridBagLayout());
+
+            GridBagConstraints gbc = new GridBagConstraints();
+
+
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            int gap = 3;
+            gbc.insets = new Insets(gap, gap, gap, gap);
+            gbc = createGbc(0, 0);
+            gbc.weightx = 0.5;
+
+            // Top left
+            add(nameLabel, gbc);
+
+            // One to the right
+            gbc.gridx += 1;
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedItemName, gbc);
+            gbc.gridwidth = 1;
+
+            // Next Row -> Reset Postion
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(descriptionLabel, gbc);
+
+            // One to the right
+            gbc.gridx += 1;
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedItemDescription, gbc);
+            gbc.gridwidth = 1;
+
+
+            // Next Row -> Reset Postion
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+
+            add(createNewEntityButton, gbc);
+            gbc.gridx += 1;
+            add(editEntityButton, gbc);
+            gbc.gridx += 1;
+            add(deleteEntityButton, gbc);
+        }
+
+
+        @Override
+        public void onEntityLoaded(Ski selectedEntity) {
+            selectedItemName.setText(selectedEntity.toString());
+            //selectedItemDescription.setText(selectedEntity.getDescription());
+        }
+
+        @Override
+        Ski loadItemData() {
+            //return new Ski(selectedItemName.getText(), selectedItemDescription.getText());
+            return null;
+        }
+    }
+
+    //endregion Ski
+
+
     //region Main Screen
 
     private static class TabButton extends Button implements ActionListener {
@@ -515,11 +707,9 @@ class SkiDriver {
         // reference to the main object
         driver = new SkiDriver();
 
-        SkiTypeAppTab skiAppTab = new SkiTypeAppTab(skiTypeManager);
+        SkiTypeAppTab skiTypeAppTab = new SkiTypeAppTab(skiTypeManager);
 
-        //TODO TEMP
-        JPanel emptyTestPanel = new JPanel();
-        emptyTestPanel.add(new JLabel("Empty content"));
+        SkiAppTab skiAppTab = new SkiAppTab(skiManager);
 
 
         // Main Space
@@ -531,8 +721,8 @@ class SkiDriver {
 
 
         // Tab Selection Buttons
-        TabButton skiTypesTabButton = new TabButton("skitype", skiAppTab);
-        TabButton skiTabButton = new TabButton("ski", emptyTestPanel);
+        TabButton skiTypesTabButton = new TabButton("skitype", skiTypeAppTab);
+        TabButton skiTabButton = new TabButton("ski", skiAppTab);
         skiTypesTabButton.addActionListener(skiTypesTabButton);
         skiTabButton.addActionListener(skiTabButton);
 
