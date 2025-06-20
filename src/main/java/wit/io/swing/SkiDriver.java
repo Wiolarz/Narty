@@ -97,8 +97,52 @@ class SkiDriver {
 
     //endregion Init
 
+    //region Helpers
+
+    public void refresh() {
+        mainFrame.revalidate();
+        mainFrame.repaint();
+        mainFrame.setVisible(true);
+    }
+
+
+    /**
+     * https://stackoverflow.com/a/70393691/17491940
+     * @param x, y
+     * @return
+     */
+    private static GridBagConstraints createGbc(int x, int y) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = x;
+        gbc.gridy = y;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        int gap = 3;
+        gbc.insets = new Insets(gap, gap + 2 * gap * x, gap, gap);
+        return gbc;
+    }
+    private static GridBagConstraints createGbc(int x, int y, int width) {
+        GridBagConstraints gbc = createGbc(x, y);
+        gbc.gridwidth = width;
+        return gbc;
+    }
+
+
+    private static GridBagConstraints createGbc(int x, int y, int width, boolean verticalFill) {
+        GridBagConstraints gbc = createGbc(x, y, width);
+        if (verticalFill) {
+            gbc.fill = GridBagConstraints.VERTICAL;
+        } else {
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+        }
+        return gbc;
+    }
+    //endregion Helpers
+
+
+    //region Generic Tab elements
+
     private interface searchableTab<E extends Writeable> {
-        void found(E selectedObject);
+        void selectedItem(E selectedObject);
     }
 
     private static class SearchedPositionButton<E extends Writeable> extends Button implements ActionListener {
@@ -113,12 +157,17 @@ class SkiDriver {
 
         public void actionPerformed(ActionEvent e) {
             //System.out.println("button is pressed  " + this.getLabel());
-
-            tab.found(storedEntity);
+            tab.selectedItem(storedEntity);
         }
 
     }
 
+
+
+
+    //endregion Generic Tab elements
+
+    //region SkiType
 
     private static class SkiAppTab extends JPanel implements searchableTab<SkiType>{
         SkiTypeSearchPanel skiTypeSearchPanel;
@@ -130,44 +179,64 @@ class SkiDriver {
             skiTypeEntityPanel = new SkiTypeEntityPanel();
             add(skiTypeEntityPanel);
         }
+        
+        //repeatSearch
+        
 
         @Override
-        public void found(SkiType selectedSkiType) {
-
-            System.out.println(selectedSkiType.getName());
+        public void selectedItem(SkiType selectedSkiType) {
+            //System.out.println(selectedSkiType.getName());
             skiTypeEntityPanel.entityLoaded(selectedSkiType);
         }
+        
+        
     }
+
 
     private static class SkiTypeSearchPanel extends JPanel implements ActionListener {
         JPanel searchResultsPanel;
-        JTextField searchTextField;
+        JTextField searchNameTextField;
+        JTextField searchDescriptionTextField;
         SkiAppTab parent;
         SkiTypeSearchPanel(SkiAppTab parent_) {
             this.parent = parent_;
-            setLayout(new GridLayout(2, 1));
-            // textfield
-            this.searchTextField = new JTextField(16);
-            add(searchTextField);
-            
+            setLayout(new GridBagLayout());
+
+            add(new JLabel("Name:"), createGbc(0, 0));
+            add(new JLabel("Description:"), createGbc(0, 1));
+
+
+            this.searchNameTextField = new JTextField(16);
+            this.searchDescriptionTextField = new JTextField(16);
+
+            add(this.searchNameTextField, createGbc(1, 0));
+            add(this.searchDescriptionTextField,  createGbc(1, 1));
+
+
             // button
             Button searchButton = new Button("search");
-
             // add action listener
             searchButton.addActionListener(this);
-
-            add(searchButton);
-
+            add(searchButton, createGbc(0, 2, 2));
 
             this.searchResultsPanel = new JPanel();
-            add(searchResultsPanel);
+            add(searchResultsPanel, createGbc(0, 3));
 
+            
             // Show all items
             ArrayList<SkiType> results = skiTypeManager.search(null, null);
             loadSearchResults(results);
         }
         public void actionPerformed(ActionEvent e) {
-            ArrayList<SkiType> results = skiTypeManager.search(searchTextField.getText(), null);
+            ArrayList<SkiType> results = skiTypeManager.search(searchNameTextField.getText(), searchDescriptionTextField.getText());
+            loadSearchResults(results);
+        }
+
+        /**
+         * Once Entity is either added/removed search bar should refresh
+         */
+        public void repeatSearch() {
+            ArrayList<SkiType> results = skiTypeManager.search(searchNameTextField.getText(), searchDescriptionTextField.getText());
             loadSearchResults(results);
         }
 
@@ -196,6 +265,7 @@ class SkiDriver {
         }
     }
 
+
     private static class SkiTypeEntityPanel extends JPanel implements ActionListener {
         JLabel selectedItemName;
         JLabel selectedItemDescription;
@@ -218,6 +288,11 @@ class SkiDriver {
         }
     }
 
+    //endregion SkiType
+
+
+    //region Main Screen
+
     private static class TabButton extends Button implements ActionListener {
         private final JPanel panel;
 
@@ -230,20 +305,16 @@ class SkiDriver {
             System.out.println("button is pressed  " + this.getLabel());
             driver.loadNewTab(panel);
         }
-
-
     }
-    public void refresh() {
-        mainFrame.revalidate();
-        mainFrame.repaint();
-        mainFrame.setVisible(true);
-    }
+
 
     public void loadNewTab(JPanel newTab) {
         tabSpace.removeAll();
         tabSpace.add(newTab);
         refresh();
     }
+
+    //endregion Main Screen
 
 
     public static void main(String[] args) throws SkiAppException {
@@ -269,7 +340,8 @@ class SkiDriver {
         tabSpace.add(skiAppTab); // TODO remember last selected tab by user
         
 
-        mainFrame.setLayout(new GridLayout(2, 2));
+        mainFrame.setLayout(new GridBagLayout());
+
 
         // Tab Selection Buttons
         TabButton skiTypesTabButton = new TabButton("skitype", skiAppTab);
@@ -277,10 +349,30 @@ class SkiDriver {
         skiTypesTabButton.addActionListener(skiTypesTabButton);
         skiTabButton.addActionListener(skiTabButton);
 
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        int gap = 3;
+        gbc.insets = new Insets(0, 0, gap, 0);
+        gbc = createGbc(0, 0);
+        gbc.weightx = 0.5;
+        mainFrame.add(skiTypesTabButton, gbc);
+
+
+        gbc.gridx = 1;
+        mainFrame.add(skiTabButton, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
         
-        mainFrame.add(skiTypesTabButton);
-        mainFrame.add(skiTabButton);
-        mainFrame.add(tabSpace);
+        gbc.weighty = 1.0;
+        gbc.weightx = 1.0;
+
+        mainFrame.add(tabSpace, gbc);
+
 
         driver.refresh();
     }
