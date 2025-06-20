@@ -1,14 +1,13 @@
 package wit.io;
 
-import wit.io.exceptions.EntityAlreadyPresentException;
-import wit.io.exceptions.EntityNotPresentException;
-import wit.io.exceptions.ReadingException;
-import wit.io.exceptions.WritingException;
+import org.junit.jupiter.api.AfterAll;
+import wit.io.exceptions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import wit.io.data.SkiType;
 import wit.io.managers.SkiTypeManager;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -27,6 +26,16 @@ class SkiTypeManagerTest
         }
     });
 
+    private static void deleteDataSourceFile() {
+        File file = new File("src/test/java/wit/io/datasources/SkiType");
+        file.delete();
+    }
+
+    @AfterAll
+    public static void teardown() {
+        deleteDataSourceFile();
+    }
+
 
     @BeforeEach
     public void setUp() {
@@ -39,7 +48,7 @@ class SkiTypeManagerTest
     }
 
     @Test
-    public void givenSkiTypeExists_whenAddingNewType_thenThrowSkiTypeAlreadyPresentException() throws EntityAlreadyPresentException, WritingException{
+    public void givenSkiTypeExists_whenAddingNewType_thenThrowSkiTypeAlreadyPresentException() throws SkiAppException {
         manager.addEntity(new SkiType("hello1", "world1"));
 
         assertThrows(
@@ -63,17 +72,17 @@ class SkiTypeManagerTest
     }
 
     @Test
-    public void givenSkiTypeNotPresentInManager_whenRemovingSki_thenThrowEntityNotPresentException() {
+    public void givenSkiTypeNotPresentInManager_whenRemovingSkiTypes_thenThrowEntityNotPresentException() {
         assertThrows(EntityNotPresentException.class, () -> manager.removeEntity(new SkiType("", "")));
     }
 
     @Test
-    public void givenSkiTypeEqualsNull_whenRemovingSki_thenThrowIllegalArgumentException() {
+    public void givenSkiTypeEqualsNull_whenRemovingSkiTypes_thenThrowIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> manager.removeEntity(null));
     }
 
     @Test
-    public void givenSkiTypeExists_whenRemovingSki_thenSkiIsRemoved() throws WritingException, EntityAlreadyPresentException, EntityNotPresentException{
+    public void givenSkiTypeExists_whenRemovingSkiType_thenSkiTypeIsRemoved() throws SkiAppException {
         SkiType ski = new SkiType("hello1", "world1");
         manager.addEntity(ski);
 
@@ -84,7 +93,7 @@ class SkiTypeManagerTest
     }
 
     @Test
-    public void givenSkiWithSimilarName_whenRemovingSki_thenThrowEntityNotPresentException() throws WritingException, EntityAlreadyPresentException {
+    public void givenSkiTypeWithSimilarName_whenRemovingSkiType_thenThrowEntityNotPresentException() throws SkiAppException {
         manager.addEntity(new SkiType("hello1", "world1"));
 
         assertThrows(
@@ -94,12 +103,12 @@ class SkiTypeManagerTest
     }
 
     @Test
-    public void givenSkiTypeExists_whenResettingEntityData_thenGetEntitiesReturnsEmptyAndClearsFile() throws Exception {
+    public void givenSkiTypeExists_whenResettingSkiType_thenGetEntitiesReturnsEmptyAndClearsFile() throws Exception {
         // given
         manager.addEntity(new SkiType("newName", "aaa"));
 
         // when
-        manager.resetEntityData();
+        setUp();
 
         // then
         assertNotNull(manager.getEntities());
@@ -107,7 +116,7 @@ class SkiTypeManagerTest
     }
 
     @Test
-    public void whenResettingEntityData_thenAppropriateFileIsEmpty() throws Exception {
+    public void whenResettingSkiTypeData_thenAppropriateFileIsEmpty() throws Exception {
         // given
         manager.addEntity(new SkiType("newName", "aaa"));
         manager.resetEntityData();
@@ -121,7 +130,7 @@ class SkiTypeManagerTest
     }
 
     @Test
-    public void givenEntityDataExists_whenCreatingNewSkiTypeManager_thenSkiDataIsLoadedSuccessfully() throws ReadingException {
+    public void givenSkiTypeDataExists_whenCreatingNewSkiTypeManager_thenSkiTypeDataIsLoadedSuccessfully() throws ReadingException {
         // given
         List<SkiType> listOfSkis = new ArrayList<>(List.of(
                 new SkiType("newName1", "aaa1"),
@@ -135,12 +144,13 @@ class SkiTypeManagerTest
 
         // then
         assertEquals(3, manager.getEntities().size());
-        listOfSkis.removeAll(manager.getEntities());
-        assertTrue(listOfSkis.isEmpty());
+        for (int i = 0; i<manager.getEntities().size(); i++) {
+            assertEquals(listOfSkis.get(i), manager.getEntities().get(i));
+        }
     }
 
     @Test
-    public void givenSkiTypeWithDifferentDescription_whenEditingSkiType_thenSkiDataIsEdited() throws EntityAlreadyPresentException, WritingException, EntityNotPresentException {
+    public void givenSkiTypeWithDifferentDescription_whenEditingSkiType_thenSkiDataIsEdited() throws SkiAppException {
         // given
         SkiType oldSkiType = new SkiType("lorem", "ip");
         SkiType newSkiType = new SkiType("lorem", "ipsum");
@@ -155,7 +165,7 @@ class SkiTypeManagerTest
     }
 
     @Test
-    public void givenSkiTypeWithDifferentName_whenEditingSkiType_thenSkiDataIsEdited() throws EntityAlreadyPresentException, WritingException, EntityNotPresentException {
+    public void givenSkiTypeWithDifferentName_whenEditingSkiType_thenSkiDataIsEdited() throws SkiAppException {
         // given
         SkiType oldSkiType = new SkiType("lor", "ipsum");
         SkiType newSkiType = new SkiType("lorem", "ipsum");
@@ -170,7 +180,7 @@ class SkiTypeManagerTest
     }
 
     @Test
-    public void givenNullSkiType_whenEditingExistingSkiType_thenThrowIllegalArgumentException() throws EntityAlreadyPresentException, WritingException {
+    public void givenNullSkiType_whenEditingExistingSkiType_thenThrowIllegalArgumentException() throws SkiAppException {
         // given
         SkiType oldSkiType = new SkiType("lorem", "ipsum");
         manager.addEntity(oldSkiType);
@@ -304,6 +314,29 @@ class SkiTypeManagerTest
 
         assertEquals(listOfSkis, manager.search(null, null));
     }
+
+    @Test
+    public void givenDatasourceFileIsMissing_whenInitializing_thenSkiTypeReadsNoData() throws ReadingException {
+        deleteDataSourceFile();
+
+        manager = new SkiTypeManager("src/test/java/wit/io/datasources/SkiType");
+
+        assertEquals(0, manager.getEntities().size());
+    }
+
+    @Test
+    public void givenDatasourceFileIsMissing_whenWritingNewSkiType_thenFileIsCreated() throws SkiAppException {
+        deleteDataSourceFile();
+        manager = new SkiTypeManager("src/test/java/wit/io/datasources/SkiType");
+
+        manager.addEntity(new SkiType("name", "description"));
+        File file = new File("src/test/java/wit/io/datasources/SkiType");
+
+        assertEquals(1, manager.getEntities().size());
+        assertTrue(file.exists());
+    }
+
+
 
 
 }

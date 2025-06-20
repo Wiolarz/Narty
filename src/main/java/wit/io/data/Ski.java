@@ -50,7 +50,7 @@ public class Ski implements Writeable {
             return false;
         }
 
-        return ((Ski) obj).hashCode() == (obj.hashCode());
+        return ((Ski) obj).hashCode() == (this.hashCode());
     }
 
     @Override

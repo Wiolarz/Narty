@@ -6,6 +6,7 @@ import wit.io.utils.Writeable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 
 public class SkiType implements Writeable {
     private final String name;
@@ -26,6 +27,11 @@ public class SkiType implements Writeable {
                 "name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 
     @Override
