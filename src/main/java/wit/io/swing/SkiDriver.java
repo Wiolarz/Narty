@@ -24,7 +24,7 @@ class SkiDriver {
     // create a frame
     static JFrame mainFrame;
 
-    static SkiDriver driver;
+    static public SkiDriver driver;
 
     static JPanel tabSpace;
 
@@ -67,11 +67,11 @@ class SkiDriver {
         skiTypeManager.addEntity(skiType2);
 
 
-        Ski ski1 = new Ski(skiType1, "marka_a", "super", "ekstra", 10f);
-        Ski ski2 = new Ski(skiType2, "marka_b", "kiepski", "zwykle", 20f);
-        Ski ski3 = new Ski(skiType1, "marka_c", "kiepski", "zwykle", 5f);
-        Ski ski4 = new Ski(skiType2, "marka_d", "kiepski", "zwykle", 3f);
-        Ski ski5 = new Ski(skiType1, "marka_e", "kiepski", "ekstra", 50f);
+        Ski ski1 = new Ski(skiType1, "żabka", "model_a", "ekstra", 10f);
+        Ski ski2 = new Ski(skiType2, "żabka", "model_b", "zwykle", 20f);
+        Ski ski3 = new Ski(skiType1, "biedronka", "model_c", "zwykle", 5f);
+        Ski ski4 = new Ski(skiType2, "zabka", "model_d", "zwykle", 3f);
+        Ski ski5 = new Ski(skiType1, "lidl", "model_e", "ekstra", 50f);
         skiManager.addEntity(ski1);
         skiManager.addEntity(ski2);
         skiManager.addEntity(ski3);
@@ -137,8 +137,8 @@ class SkiDriver {
     static class AutoCompleteComboBox extends JComboBox {
         public int caretPos = 0;
         public JTextField tfield = null;
-        public AutoCompleteComboBox(final Object[] countries) {
-            super(countries);
+        public AutoCompleteComboBox(final Object[] selectableEntities) {
+            super(selectableEntities);
             setEditor(new BasicComboBoxEditor());
             setEditable(true);
         }
@@ -607,7 +607,7 @@ class SkiDriver {
             searchResultsPanel.setLayout(new GridLayout(number_of_results, 1));
             for (Ski skiItem : searchResults) {
                 System.out.println(skiItem.toString());
-                SearchedPositionButton<Ski> skiResult = new SearchedPositionButton<>(skiItem.toString(), skiItem, parent);
+                SearchedPositionButton<Ski> skiResult = new SearchedPositionButton<>(skiItem.getBrand() + " " + skiItem.getModel(), skiItem, parent);
 
                 skiResult.addActionListener(skiResult);
 
@@ -621,24 +621,36 @@ class SkiDriver {
 
     private static class SkiEntityPanel extends EntityPanel<Ski, SkiManager>  {
         SkiTypeManager skiTypeManager;
-        JTextField selectedItemName;
-        JTextField selectedItemDescription;
+        JTextField selectedItemBrand;
+        JTextField selectedItemModel;
 
-        AutoCompleteComboBox comboBox;
+        JTextField selectedItemBonds;
+        JTextField selectedItemLength;
+
+        AutoCompleteComboBox selectedItemSkiTypeComboBox;
+
+
+        List<SkiType> skiTypes;
 
         SkiEntityPanel(SkiManager manager_, SkiAppTab parent_, SkiTypeManager skiTypeManager_){
             this.manager = manager_;
             this.parent = parent_;
             this.skiTypeManager = skiTypeManager_;
 
-            // Elements
-            selectedItemName = new JTextField("");
-            selectedItemDescription = new JTextField("");
-            selectedItemName.setPreferredSize( new Dimension(200, 24));
-            selectedItemDescription.setPreferredSize( new Dimension(200, 24));
 
-            JLabel nameLabel = new JLabel("Brand:  ");
-            JLabel descriptionLabel = new JLabel("Model:  ");
+
+            // Elements
+            selectedItemBrand = new JTextField("");
+            selectedItemModel = new JTextField("");
+            selectedItemBonds = new JTextField("");
+            selectedItemLength = new JTextField("");
+
+
+            JLabel brandLabel = new JLabel("Brand:  ");
+            JLabel modelLabel = new JLabel("Model:  ");
+            JLabel bondsLabel = new JLabel("Bonds:  ");
+            JLabel lengthLabel = new JLabel("Length:  ");
+            JLabel skiTypeLabel = new JLabel("Ski type:  ");
 
 
             CreateNewEntityButton<Ski, SkiManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
@@ -651,23 +663,37 @@ class SkiDriver {
             deleteEntityButton.addActionListener(deleteEntityButton);
 
 
-            List<SkiType> skiTypes = this.skiTypeManager.getEntities();
-            String[] skiTypeNames = new String[skiTypes.size()];
+            this.skiTypes = this.skiTypeManager.getEntities();
+            String[] skiTypeNames = new String[this.skiTypes.size()];
             for (int i = 0; i < skiTypes.size(); i++) {
                 skiTypeNames[i] = skiTypes.get(i).getName();
             }
 
-            comboBox = new AutoCompleteComboBox(skiTypeNames);
+            selectedItemSkiTypeComboBox = new AutoCompleteComboBox(skiTypeNames);
 
 
 
             //Layout
+            //
+            Dimension defaultButtonDimension = new Dimension(200, 24);
+            selectedItemBrand.setPreferredSize(defaultButtonDimension);
+            selectedItemModel.setPreferredSize(defaultButtonDimension);
+            selectedItemBonds.setPreferredSize(defaultButtonDimension);
+            selectedItemLength.setPreferredSize(defaultButtonDimension);
+
 
 
             setLayout(new GridBagLayout());
 
             GridBagConstraints gbc = new GridBagConstraints();
 
+            selectedItemSkiTypeComboBox.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    driver.refresh(); //XDDDDDDDDDDDDDDDDDDDDDDD
+                    //System.out.println(deleteEntityButton.is);
+                }
+            });
 
             gbc.gridx = 0;
             gbc.gridy = 0;
@@ -677,41 +703,70 @@ class SkiDriver {
             gbc = createGbc(0, 0);
             gbc.weightx = 0.5;
 
-            // Top left
-            add(nameLabel, gbc);
 
-            // One to the right
-            gbc.gridx += 1;
+            // Top left
+            add(brandLabel, gbc);
+
+            gbc.gridx += 1; // One to the right
 
             gbc.gridwidth = 2; // wider element
-            add(selectedItemName, gbc);
+            add(selectedItemBrand, gbc);
             gbc.gridwidth = 1;
 
-            // Next Row -> Reset Postion
+            // Next Row -> Reset Position
             gbc.gridy += 1;
             gbc.gridx = 0;
 
-            add(descriptionLabel, gbc);
+            add(modelLabel, gbc);
 
-            // One to the right
-            gbc.gridx += 1;
+            gbc.gridx += 1; // One to the right
 
             gbc.gridwidth = 2; // wider element
-            add(selectedItemDescription, gbc);
+            add(selectedItemModel, gbc);
             gbc.gridwidth = 1;
 
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
 
-            //XD
-            // Next Row -> Reset Postion
+            add(bondsLabel, gbc);
+
+            gbc.gridx += 1; // One to the right
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedItemBonds, gbc);
+            gbc.gridwidth = 1;
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(lengthLabel, gbc);
+
+            gbc.gridx += 1; // One to the right
+            gbc.gridwidth = 2; // wider element
+            add(selectedItemLength, gbc);
+            gbc.gridwidth = 1;
+
+            // Next Row -> Reset Position
             gbc.gridy += 1;
             gbc.gridx = 0;
             gbc.gridwidth = 3; // wider element
-            add(comboBox, gbc);
+            add(skiTypeLabel, gbc);
+            gbc.gridwidth = 1;
+
+
+            //XD
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+            gbc.gridwidth = 3; // wider element
+            add(selectedItemSkiTypeComboBox, gbc);
             gbc.gridwidth = 1;
             //XD
 
 
-            // Next Row -> Reset Postion
+            // Next Row -> Reset Position
             gbc.gridy += 1;
             gbc.gridx = 0;
             add(createNewEntityButton, gbc);
@@ -719,23 +774,52 @@ class SkiDriver {
             add(editEntityButton, gbc);
             gbc.gridx += 1;
             add(deleteEntityButton, gbc);
-
-
-            //XD HERE XD
-
         }
 
 
         @Override
         public void onEntityLoaded(Ski selectedEntity) {
-            selectedItemName.setText(selectedEntity.toString());
-            //selectedItemDescription.setText(selectedEntity.getDescription());
+            selectedItemBrand.setText(selectedEntity.getBrand());
+            selectedItemModel.setText(selectedEntity.getModel());
+            selectedItemBonds.setText(selectedEntity.getBonds());
+            selectedItemLength.setText(String.valueOf(selectedEntity.getLength()));
+
+            String typeName = selectedEntity.getType().getName();
+
+            // TODO: optimise this  | save this value and use it here String[] skiTypeNames = new String[skiTypes.size()];
+            int itemIndex = 0;
+            for (int i = 0; i < selectedItemSkiTypeComboBox.getSize().getWidth(); i++){
+                if(selectedItemSkiTypeComboBox.getItemAt(i).equals(typeName)){
+                    itemIndex = i;
+                    break;
+                }
+            }
+            selectedItemSkiTypeComboBox.setSelectedIndex(itemIndex);
         }
 
         @Override
         Ski loadItemData() {
-            //return new Ski(selectedItemName.getText(), selectedItemDescription.getText());
-            return null;
+            float length = 0;
+            try{
+                length = Float.parseFloat(selectedItemLength.getText());
+            } catch (NullPointerException e){
+                System.out.println("loadItemData " + e.getMessage());
+                return null;
+            }
+            catch (NumberFormatException e) {
+                System.out.println("loadItemData " + e.getMessage());
+                return null;
+            }
+
+            SkiType skiType = skiTypes.get(selectedItemSkiTypeComboBox.getSelectedIndex());
+
+            return new Ski(
+                    skiType,
+                    selectedItemBrand.getText(),
+                    selectedItemModel.getText(),
+                    selectedItemBonds.getText(),
+                    length
+            );
         }
     }
 
