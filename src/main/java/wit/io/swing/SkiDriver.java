@@ -5,6 +5,7 @@ package wit.io.swing;
 import wit.io.data.Ski;
 import wit.io.data.SkiType;
 import wit.io.exceptions.*;
+import wit.io.managers.Manager;
 import wit.io.managers.SkiManager;
 import wit.io.managers.SkiTypeManager;
 import wit.io.utils.Const;
@@ -107,9 +108,9 @@ class SkiDriver {
 
 
     /**
-     * https://stackoverflow.com/a/70393691/17491940
+     * <a href="https://stackoverflow.com/a/70393691/17491940">...</a>
      * @param x, y
-     * @return
+     * @return parameter to be used alongside add method to determine layout of new element
      */
     private static GridBagConstraints createGbc(int x, int y) {
         GridBagConstraints gbc = new GridBagConstraints();
@@ -135,12 +136,6 @@ class SkiDriver {
         void selectedItem(E selectedObject);
     }
 
-    private interface EntityPanel {
-        void createItem();
-        void editItem();
-        void deleteItem();
-    }
-
 
     private static class SearchedPositionButton<E extends Writeable> extends Button implements ActionListener {
         E storedEntity;
@@ -159,79 +154,170 @@ class SkiDriver {
 
     }
 
-
-    private static class CreateNewEntityButton extends Button implements ActionListener {
-        EntityPanel panel;
-        CreateNewEntityButton(String buttonText, EntityPanel panel_) {
+    // Entity Edit BUTTONS
+    private static class CreateNewEntityButton<E extends Writeable, M extends Manager<E>> extends Button implements ActionListener {
+        EntityPanel<E, M> panel;
+        CreateNewEntityButton(String buttonText, EntityPanel<E, M> panel_) {
             super(buttonText);
             this.panel = panel_;
         }
         public void actionPerformed(ActionEvent e) {
             //System.out.println("button is pressed  " + this.getLabel());
             panel.createItem();
+            panel.repeatSearch();
         }
     }
-    private static class EditEntityButton extends Button implements ActionListener {
-        EntityPanel panel;
-        EditEntityButton(String buttonText, EntityPanel panel_) {
+    private static class EditEntityButton<E extends Writeable, M extends Manager<E>> extends Button implements ActionListener {
+        EntityPanel<E, M> panel;
+        EditEntityButton(String buttonText, EntityPanel<E, M> panel_) {
             super(buttonText);
             this.panel = panel_;
         }
         public void actionPerformed(ActionEvent e) {
             //System.out.println("button is pressed  " + this.getLabel());
             panel.editItem();
+            panel.repeatSearch();
         }
     }
-    private static class DeleteEntityButton extends Button implements ActionListener {
-        EntityPanel panel;
-        DeleteEntityButton(String buttonText, EntityPanel panel_) {
+    private static class DeleteEntityButton<E extends Writeable, M extends Manager<E>> extends Button implements ActionListener {
+        EntityPanel<E, M> panel;
+        DeleteEntityButton(String buttonText, EntityPanel<E, M> panel_) {
             super(buttonText);
             this.panel = panel_;
         }
         public void actionPerformed(ActionEvent e) {
             //System.out.println("button is pressed  " + this.getLabel());
             panel.deleteItem();
+            panel.repeatSearch();
         }
     }
 
     //endregion Generic Tab elements
 
+    private static abstract class GenericAppTab<E extends Writeable, M extends Manager<E>> extends JPanel implements searchableTab<E> {
+        SearchPanel<E> searchPanel;
+        EntityPanel<E, M> entityPanel;
 
-    //region SkiType
 
-    private static class SkiAppTab extends JPanel implements searchableTab<SkiType>{
-        SkiTypeSearchPanel skiTypeSearchPanel;
-        SkiTypeEntityPanel skiTypeEntityPanel;
-        SkiAppTab() {
-            skiTypeSearchPanel = new SkiTypeSearchPanel(this);
-            add(skiTypeSearchPanel);
-
-            skiTypeEntityPanel = new SkiTypeEntityPanel(this);
-            add(skiTypeEntityPanel);
+        public final void repeatSearch() {
+            searchPanel.repeatSearch();
         }
-        
 
-        public void repeatSearch() {
-            skiTypeSearchPanel.repeatSearch();
+        public final void selectedItem(E selectedEntity) {
+            entityPanel.entityLoaded(selectedEntity);
         }
 
 
-        @Override
-        public void selectedItem(SkiType selectedSkiType) {
-            //System.out.println(selectedSkiType.getName());
-            skiTypeEntityPanel.entityLoaded(selectedSkiType);
+    }
+    private static abstract class SearchPanel<E extends Writeable> extends JPanel implements ActionListener  {
+        //TODO make use of generic manager to call search inside abstract class
+        //TODO implement safer constructor
+        SkiTypeAppTab parent;
+        JPanel searchResultsPanel;
+        
+        protected abstract ArrayList<E> performSearch(); // TODO make it even more secure, by forcing overriding of arguments collection
+
+        public final void actionPerformed(ActionEvent e) {
+            loadSearchResults(performSearch());
         }
-        
-        
+
+        /**
+         * Once Entity is either added/removed search bar should refresh
+         */
+        public final void repeatSearch() {
+            loadSearchResults(performSearch());
+        }
+
+        abstract void loadSearchResults(ArrayList<E> searchResults);
+    }
+
+    private static abstract class EntityPanel<E extends Writeable, M extends Manager<E>> extends JPanel {
+        E selectedEntity;
+        M manager;
+        SkiTypeAppTab parent;
+
+        abstract protected void onCreation();
+
+        //TODO make sure you cannot more nicely force entity panel creation
+         EntityPanel(M manager_, SkiTypeAppTab parent_){
+             this.manager = manager_;
+             this.parent = parent_;
+             onCreation();
+         }
+
+        final protected void repeatSearch() {
+            parent.repeatSearch();
+        }
+
+
+        abstract E loadItemData();
+
+        /**
+         * Called only by entityLoaded()
+         * @param selectedEntity_
+         */
+        protected abstract void onEntityLoaded(E selectedEntity_);
+
+
+        /**
+         * Is called by SearchPanel
+         * @param selectedEntity_
+         */
+        public final void entityLoaded(E selectedEntity_) {
+            selectedEntity = selectedEntity_;
+            onEntityLoaded(selectedEntity_);
+        }
+
+        final void createItem() {
+            try {
+                E newEntity = loadItemData();
+                manager.addEntity(newEntity);
+            } catch (SkiAppException e) { // TODO consider Split error message so that it can cover case if loading item data was successful
+                System.out.println("Failed to create new SkiType. Error: " + e);
+            }
+
+        }
+        final void editItem() {
+            try {
+                manager.editEntity(selectedEntity, loadItemData());
+            } catch (SkiAppException e) {
+                System.out.println("Failed to edit: " + selectedEntity.toString() + "  Error: " + e);
+            }
+        }
+        final void deleteItem() {
+            try {
+                manager.removeEntity(selectedEntity);
+            } catch (SkiAppException e) {
+                System.out.println("Failed to delete: " + selectedEntity.toString() + "  Error: " + e);
+            }
+        }
     }
 
 
-    private static class SkiTypeSearchPanel extends JPanel implements ActionListener {
-        JPanel searchResultsPanel;
+
+    //region SkiType
+
+    private static class SkiTypeAppTab extends GenericAppTab<SkiType, SkiTypeManager> {
+        SkiTypeAppTab(SkiTypeManager manager_) {
+            searchPanel = new SkiTypeSearchPanel(manager_, this);
+            add(searchPanel);
+
+            entityPanel = new SkiTypeEntityPanel(manager_, this);
+            add(entityPanel);
+        }
+    }
+    
+    
+    private static class SkiTypeSearchPanel extends SearchPanel<SkiType> {
+        // as search() can have any combination of types of arguments, it cannot be generalised //TODO verify if its true
+        SkiTypeManager manager;
+        
         JTextField searchNameTextField;
         JTextField searchDescriptionTextField;
-        SkiAppTab parent;
-        SkiTypeSearchPanel(SkiAppTab parent_) {
+        
+
+        SkiTypeSearchPanel(SkiTypeManager manager_, SkiTypeAppTab parent_) {
+            this.manager = manager_;
             this.parent = parent_;
             setLayout(new GridBagLayout());
 
@@ -260,18 +346,12 @@ class SkiDriver {
             ArrayList<SkiType> results = skiTypeManager.search(null, null);
             loadSearchResults(results);
         }
-        public void actionPerformed(ActionEvent e) {
-            ArrayList<SkiType> results = skiTypeManager.search(searchNameTextField.getText(), searchDescriptionTextField.getText());
-            loadSearchResults(results);
+
+        @Override
+        protected ArrayList<SkiType> performSearch() {
+            return manager.search(searchNameTextField.getText(), searchDescriptionTextField.getText());
         }
 
-        /**
-         * Once Entity is either added/removed search bar should refresh
-         */
-        public void repeatSearch() {
-            ArrayList<SkiType> results = skiTypeManager.search(searchNameTextField.getText(), searchDescriptionTextField.getText());
-            loadSearchResults(results);
-        }
 
         public void loadSearchResults(ArrayList<SkiType> searchResults) {
             searchResultsPanel.removeAll();
@@ -299,16 +379,17 @@ class SkiDriver {
     }
 
 
-    private static class SkiTypeEntityPanel extends JPanel implements ActionListener, EntityPanel {
+    private static class SkiTypeEntityPanel extends EntityPanel<SkiType, SkiTypeManager>  {
         JTextField selectedItemName;
         JTextField selectedItemDescription;
 
-        SkiType selectedEntity;
+        SkiTypeEntityPanel(SkiTypeManager manager_, SkiTypeAppTab parent_){
+            super(manager_, parent_);
+        }
 
-        SkiAppTab parent;
+        @Override
+        protected void onCreation() {
 
-        SkiTypeEntityPanel(SkiAppTab parent_) {
-            this.parent = parent_;
             // Elements
             selectedItemName = new JTextField("");
             selectedItemDescription = new JTextField("");
@@ -319,13 +400,13 @@ class SkiDriver {
             JLabel descriptionLabel = new JLabel("Description:  ");
 
 
-            CreateNewEntityButton createNewEntityButton = new CreateNewEntityButton("New", this);
+            CreateNewEntityButton<SkiType, SkiTypeManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
             createNewEntityButton.addActionListener(createNewEntityButton);
 
-            EditEntityButton editEntityButton = new EditEntityButton("Edit", this);
+            EditEntityButton<SkiType, SkiTypeManager> editEntityButton = new EditEntityButton<>("Edit", this);
             editEntityButton.addActionListener(editEntityButton);
 
-            DeleteEntityButton deleteEntityButton = new DeleteEntityButton("Delete", this);
+            DeleteEntityButton<SkiType, SkiTypeManager> deleteEntityButton = new DeleteEntityButton<>("Delete", this);
             deleteEntityButton.addActionListener(deleteEntityButton);
 
 
@@ -381,52 +462,16 @@ class SkiDriver {
             add(deleteEntityButton, gbc);
         }
 
-        public void entityLoaded(SkiType selectedEntity) {
+
+        @Override
+        public void onEntityLoaded(SkiType selectedEntity) {
             selectedItemName.setText(selectedEntity.getName());
             selectedItemDescription.setText(selectedEntity.getDescription());
-            this.selectedEntity = selectedEntity;
-        }
-
-        public void actionPerformed(ActionEvent e) {
-           
         }
 
         @Override
-        public void createItem() {
-            System.out.println("Create");
-            SkiType newSkiType = new SkiType(selectedItemName.getText(), selectedItemDescription.getText());
-
-
-            try {
-                skiTypeManager.addEntity(newSkiType);
-            } catch (SkiAppException e) {
-                System.out.println("Failed to create new SkiType: " + e);
-            }
-            parent.repeatSearch();
-        }
-
-        @Override
-        public void editItem() {
-            System.out.println("Edit");
-            SkiType newSkiType = new SkiType(selectedItemName.getText(), selectedItemDescription.getText());
-
-            try {
-                skiTypeManager.editEntity(selectedEntity, newSkiType);
-            } catch (SkiAppException e) {
-                System.out.println("Failed to edit SkiType: " + e);
-            }
-            parent.repeatSearch();
-        }
-
-        @Override
-        public void deleteItem() {
-            System.out.println("Delete");
-            try {
-                skiTypeManager.removeEntity(selectedEntity);
-            } catch (SkiAppException e) {
-                System.out.println("Failed to delete SkiType: " + e);
-            }
-            parent.repeatSearch();
+        SkiType loadItemData() {
+            return new SkiType(selectedItemName.getText(), selectedItemDescription.getText());
         }
     }
 
@@ -470,7 +515,7 @@ class SkiDriver {
         // reference to the main object
         driver = new SkiDriver();
 
-        SkiAppTab skiAppTab = new SkiAppTab();
+        SkiTypeAppTab skiAppTab = new SkiTypeAppTab(skiTypeManager);
 
         //TODO TEMP
         JPanel emptyTestPanel = new JPanel();
