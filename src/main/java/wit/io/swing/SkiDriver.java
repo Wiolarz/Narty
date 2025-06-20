@@ -2,12 +2,14 @@ package wit.io.swing;
 
 // Java Program to create a SkiDriver class to run
 // the toast class
+import wit.io.data.Client;
 import wit.io.data.Ski;
 import wit.io.data.SkiType;
 import wit.io.exceptions.*;
 import wit.io.managers.Manager;
 import wit.io.managers.SkiManager;
 import wit.io.managers.SkiTypeManager;
+import wit.io.managers.ClientManager;
 import wit.io.utils.Const;
 import wit.io.utils.Writeable;
 
@@ -28,11 +30,10 @@ class SkiDriver {
 
     static JPanel tabSpace;
 
-
-    // managers
     static SkiTypeManager skiTypeManager;
     static SkiManager skiManager;
-    
+    static ClientManager clientManager;
+
 
     //endregion Variables
 
@@ -43,16 +44,13 @@ class SkiDriver {
         try {
             skiTypeManager = new SkiTypeManager(Const.SkiTypeFilePath);
             skiManager = new SkiManager(Const.SkiFilePath);
+            clientManager = new ClientManager(Const.ClientFilePath);
         } catch (ReadingException e)
         {
             System.out.println("Failed to create Manager");
             return false;
         }
 
-        skiManager.resetEntityData();
-        skiTypeManager.resetEntityData();
-
-        populateData();
         return true;
     }
 
@@ -60,6 +58,7 @@ class SkiDriver {
     private static void populateData() throws SkiAppException {
         skiManager.resetEntityData();
         skiTypeManager.resetEntityData();
+        clientManager.resetEntityData();
 
         SkiType skiType1 = new SkiType("hello", "world");
         SkiType skiType2 = new SkiType("kill", "mee");
@@ -78,6 +77,14 @@ class SkiDriver {
         skiManager.addEntity(ski4);
         skiManager.addEntity(ski5);
 
+
+        Client client1 = new Client(0, "Janusz", "Tracz", "bogacz");
+        Client client2 = new Client(1, "Adrian", "Zandberg", "potężny Duńczyk");
+        Client client3 = new Client(2, "Janusz", "Korwin-Mikke", "komunistyczny mnożnik lodu w szklance");
+
+        clientManager.addEntity(client1);
+        clientManager.addEntity(client2);
+        clientManager.addEntity(client3);
     }
 
 
@@ -391,7 +398,7 @@ class SkiDriver {
 
             
             // Show all items
-            ArrayList<SkiType> results = skiTypeManager.search(null, null);
+            ArrayList<SkiType> results = this.manager.search(null, null);
             loadSearchResults(results);
         }
 
@@ -541,21 +548,30 @@ class SkiDriver {
         // as search() can have any combination of types of arguments, it cannot be generalised //TODO verify if its true
         SkiManager manager;
 
-        JTextField searchNameTextField;
-        JTextField searchDescriptionTextField;
-
+        JTextField searchItemBrand;
+        JTextField searchItemModel;
+        JTextField searchItemBonds;
+        JTextField searchMinItemLength;
+        JTextField searchMaxItemLength;
+        // todo: add ski type
 
         SkiSearchPanel(SkiManager manager_, SkiAppTab parent_) {
             this.manager = manager_;
             this.parent = parent_;
 
+            JLabel itemBrandLabel = new JLabel("Brand:");
+            JLabel itemModelLabel = new JLabel("Model:");
+            JLabel itemBondsLabel = new JLabel("Bonds:");
+            JLabel itemMinLengthLabel = new JLabel("Mininmum length:");
+            JLabel itemMaxLengthLabel = new JLabel("Maximum length:");
+            JLabel skiTypeLabel = new JLabel("Ski type:  ");
 
-            JLabel nameLabel = new JLabel("Name:");
-            JLabel descriptionLabel = new JLabel("Description:");
 
-
-            this.searchNameTextField = new JTextField(16);
-            this.searchDescriptionTextField = new JTextField(16);
+            this.searchItemBrand = new JTextField();
+            this.searchItemModel = new JTextField();
+            this.searchItemBonds = new JTextField();
+            this.searchMinItemLength = new JTextField();
+            this.searchMaxItemLength = new JTextField();
 
             // button
             Button searchButton = new Button("search");
@@ -568,28 +584,80 @@ class SkiDriver {
             //LAYOUT
             setLayout(new GridBagLayout());
 
-            add(nameLabel, createGbc(0, 0));
-            add(descriptionLabel, createGbc(0, 1));
 
-            add(this.searchNameTextField, createGbc(1, 0));
-            add(this.searchDescriptionTextField,  createGbc(1, 1));
+            Dimension defaultFieldDimension = new Dimension(200, 24);
+            searchItemBrand.setPreferredSize(defaultFieldDimension);
+            searchItemModel.setPreferredSize(defaultFieldDimension);
+            searchItemBonds.setPreferredSize(defaultFieldDimension);
+            searchMinItemLength.setPreferredSize(defaultFieldDimension);
+            searchMaxItemLength.setPreferredSize(defaultFieldDimension);
 
 
-            add(searchButton, createGbc(0, 2, 2));
+            int row = 0;
+            int column = 0;
 
+            add(itemBrandLabel, createGbc(column, row));
+            row += 1;
+            add(itemModelLabel, createGbc(column, row));
+            row += 1;
+            add(itemBondsLabel, createGbc(column, row));
+            row += 1;
+            add(itemMinLengthLabel, createGbc(column, row));
+            row += 1;
+            add(itemMaxLengthLabel, createGbc(column, row));
 
-            add(searchResultsPanel, createGbc(0, 3));
+            column +=1; row = 0;
+
+            add(this.searchItemBrand, createGbc(column, row));
+            row += 1;
+            add(this.searchItemModel,  createGbc(column, row));
+            row += 1;
+            add(this.searchItemBonds,  createGbc(column, row));
+            row += 1;
+            add(this.searchMinItemLength,  createGbc(column, row));
+            row += 1;
+            add(this.searchMaxItemLength,  createGbc(column, row));
+
+            column = 0; row +=1;
+
+            add(searchButton, createGbc(column, row, 2));
+
+            row += 1;
+            add(searchResultsPanel, createGbc(column, row));
 
 
             // Show all items
-            ArrayList<Ski> results = skiManager.search(null, null, null, null, null, null);
+            ArrayList<Ski> results = this.manager.search(null, null, null, null, null, null);
             loadSearchResults(results);
         }
 
         @Override
         protected ArrayList<Ski> performSearch() {
+            Float minLength = null;
+            try{
+                minLength = Float.parseFloat(searchMinItemLength.getText());
+            } catch (NullPointerException | NumberFormatException ignored){}
+            Float maxLength = null;
+            try{
+                maxLength = Float.parseFloat(searchMaxItemLength.getText());
+            } catch (NullPointerException | NumberFormatException ignored){}
+
+            SkiType searchedSkiType = null;
+//
+//            String typeName = selectedEntity.getType().getName();
+//
+//            // TODO: optimise this  | save this value and use it here String[] skiTypeNames = new String[skiTypes.size()];
+//            int itemIndex = 0;
+//            for (int i = 0; i < selectedItemSkiTypeComboBox.getSize().getWidth(); i++){
+//                if(selectedItemSkiTypeComboBox.getItemAt(i).equals(typeName)){
+//                    itemIndex = i;
+//                    break;
+//                }
+//            }
+//            selectedItemSkiTypeComboBox.setSelectedIndex(itemIndex);
+
             //SkiType type, String brand, String model, String bonds, Float minLength, Float maxLength  //TODO fix
-            return manager.search(null, null, null, null, null, null);
+            return manager.search(searchedSkiType, searchItemBrand.getText(), searchItemModel.getText(), searchItemBonds.getText(), minLength, maxLength);
         }
 
 
@@ -623,7 +691,6 @@ class SkiDriver {
         SkiTypeManager skiTypeManager;
         JTextField selectedItemBrand;
         JTextField selectedItemModel;
-
         JTextField selectedItemBonds;
         JTextField selectedItemLength;
 
@@ -668,6 +735,7 @@ class SkiDriver {
             for (int i = 0; i < skiTypes.size(); i++) {
                 skiTypeNames[i] = skiTypes.get(i).getName();
             }
+
 
             selectedItemSkiTypeComboBox = new AutoCompleteComboBox(skiTypeNames);
 
@@ -826,6 +894,287 @@ class SkiDriver {
     //endregion Ski
 
 
+    //region Client
+
+    private static class ClientAppTab extends GenericAppTab<Client, ClientManager> {
+        ClientAppTab(ClientManager manager_) {
+            searchPanel = new ClientSearchPanel(manager_, this);
+            add(searchPanel);
+
+            entityPanel = new ClientEntityPanel(manager_, this);
+            add(entityPanel);
+        }
+    }
+
+
+    private static class ClientSearchPanel extends SearchPanel<Client, ClientManager> {
+        // as search() can have any combination of types of arguments, it cannot be generalised //TODO verify if its true
+        ClientManager manager;
+
+        JTextField searchFirstNameTextField;
+        JTextField searchLastNameTextField;
+        JTextField searchDocIDTextField;
+        JTextField searchDescriptionTextField;
+
+
+        ClientSearchPanel(ClientManager manager_, ClientAppTab parent_) {
+            this.manager = manager_;
+            this.parent = parent_;
+
+
+            JLabel firstNameLabel = new JLabel("First name:");
+            JLabel lastNameLabel = new JLabel("Last name:");
+            JLabel docIdLabel = new JLabel("Document ID:");
+            JLabel descriptionLabel = new JLabel("Description:");
+
+            this.searchFirstNameTextField = new JTextField();
+            this.searchLastNameTextField = new JTextField();
+            this.searchDocIDTextField = new JTextField();
+            this.searchDescriptionTextField = new JTextField();
+
+            // button
+            Button searchButton = new Button("search");
+            // add action listener
+            searchButton.addActionListener(this);
+
+            this.searchResultsPanel = new JPanel();
+
+
+            setLayout(new GridBagLayout());
+
+            Dimension defaultFieldDimension = new Dimension(200, 24);
+            searchFirstNameTextField.setPreferredSize(defaultFieldDimension);
+            searchLastNameTextField.setPreferredSize(defaultFieldDimension);
+            searchDocIDTextField.setPreferredSize(defaultFieldDimension);
+            searchDescriptionTextField.setPreferredSize(defaultFieldDimension);
+
+            int row = 0;
+            int column = 0;
+
+            add(firstNameLabel, createGbc(column, row));
+            row += 1;
+            add(lastNameLabel, createGbc(column, row));
+            row += 1;
+            add(docIdLabel, createGbc(column, row));
+            row += 1;
+            add(descriptionLabel, createGbc(column, row));
+
+            column +=1; row = 0;
+
+            add(this.searchFirstNameTextField, createGbc(column, row));
+            row += 1;
+            add(this.searchLastNameTextField,  createGbc(column, row));
+            row += 1;
+            add(this.searchDocIDTextField,  createGbc(column, row));
+            row += 1;
+            add(this.searchDescriptionTextField,  createGbc(column, row));
+
+            column = 0; row +=1;
+
+            add(searchButton, createGbc(column, row, 2));
+
+            row += 1;
+            add(searchResultsPanel, createGbc(column, row));
+
+
+            // Show all items
+            ArrayList<Client> results = this.manager.search(null, null, null, null);
+            loadSearchResults(results);
+        }
+
+        @Override
+        protected ArrayList<Client> performSearch() {
+            Integer id = null;
+            try {
+                id = Integer.parseInt(searchDocIDTextField.getText());
+            }
+            catch (NumberFormatException e) {}
+
+            return manager.search(id, searchFirstNameTextField.getText(), searchLastNameTextField.getText(), searchDescriptionTextField.getText());
+        }
+
+
+        public void loadSearchResults(ArrayList<Client> searchResults) {
+            searchResultsPanel.removeAll();
+
+            int number_of_results = searchResults.size();
+            if (number_of_results == 0) {
+                number_of_results = 1;  // Grid layout cannot be set to 0
+                JLabel noResultsLabel = new JLabel("No results");
+                searchResultsPanel.add(noResultsLabel);
+
+            }
+
+            searchResultsPanel.setLayout(new GridLayout(number_of_results, 1));
+            for (Client clientItem : searchResults) {
+                System.out.println(clientItem.toString());
+                SearchedPositionButton<Client> skiTypeResult =
+                        new SearchedPositionButton<>(
+                                clientItem.getFirstName() + " " + clientItem.getLastName(),
+                                clientItem, parent
+                        );
+
+                skiTypeResult.addActionListener(skiTypeResult);
+
+                searchResultsPanel.add(skiTypeResult);
+            }
+            driver.refresh();
+            System.out.println("End of Search");
+        }
+    }
+
+
+    private static class ClientEntityPanel extends EntityPanel<Client, ClientManager>  {
+
+        JTextField selectedItemFirstNameTextField;
+        JTextField selectedItemLastNameTextField;
+        JTextField selectedItemDocIDTextField;
+        JTextField selectedItemDescriptionTextField;
+
+        ClientEntityPanel(ClientManager manager_, ClientAppTab parent_){
+            this.manager = manager_;
+            this.parent = parent_;
+
+
+            // Elements
+            selectedItemFirstNameTextField = new JTextField();
+            selectedItemLastNameTextField = new JTextField();
+            selectedItemDocIDTextField = new JTextField();
+            selectedItemDescriptionTextField = new JTextField();
+
+            Dimension defaultButtonDimension = new Dimension(200, 24);
+            selectedItemFirstNameTextField.setPreferredSize(defaultButtonDimension);
+            selectedItemLastNameTextField.setPreferredSize(defaultButtonDimension);
+            selectedItemDocIDTextField.setPreferredSize(defaultButtonDimension);
+            selectedItemDescriptionTextField.setPreferredSize(defaultButtonDimension);
+
+            JLabel firstNameLabel = new JLabel("Firstname:  ");
+            JLabel lastNameLabel = new JLabel("Lastname:  ");
+            JLabel docIdLabel = new JLabel("Document id:  ");
+            JLabel descriptionLabel = new JLabel("Description:  ");
+
+
+            CreateNewEntityButton<Client, ClientManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
+            createNewEntityButton.addActionListener(createNewEntityButton);
+
+            EditEntityButton<Client, ClientManager> editEntityButton = new EditEntityButton<>("Edit", this);
+            editEntityButton.addActionListener(editEntityButton);
+
+            DeleteEntityButton<Client, ClientManager> deleteEntityButton = new DeleteEntityButton<>("Delete", this);
+            deleteEntityButton.addActionListener(deleteEntityButton);
+
+
+            //Layout
+
+
+            setLayout(new GridBagLayout());
+
+            GridBagConstraints gbc = new GridBagConstraints();
+
+
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            int gap = 3;
+            gbc.insets = new Insets(gap, gap, gap, gap);
+            gbc = createGbc(0, 0);
+            gbc.weightx = 0.5;
+
+            // Top left
+            add(firstNameLabel, gbc);
+
+            // One to the right
+            gbc.gridx += 1;
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedItemFirstNameTextField, gbc);
+            gbc.gridwidth = 1;
+
+            // Next Row -> Reset Postion
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(lastNameLabel, gbc);
+
+            // One to the right
+            gbc.gridx += 1;
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedItemLastNameTextField, gbc);
+            gbc.gridwidth = 1;
+
+
+            // Next Row -> Reset Postion
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(docIdLabel, gbc);
+
+            // One to the right
+            gbc.gridx += 1;
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedItemDocIDTextField, gbc);
+            gbc.gridwidth = 1;
+
+
+            // Next Row -> Reset Postion
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(descriptionLabel, gbc);
+
+            // One to the right
+            gbc.gridx += 1;
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedItemDescriptionTextField, gbc);
+            gbc.gridwidth = 1;
+
+
+            // Next Row -> Reset Postion
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+
+            add(createNewEntityButton, gbc);
+            gbc.gridx += 1;
+            add(editEntityButton, gbc);
+            gbc.gridx += 1;
+            add(deleteEntityButton, gbc);
+        }
+
+
+        @Override
+        public void onEntityLoaded(Client selectedEntity) {
+            selectedItemFirstNameTextField.setText(selectedEntity.getFirstName());
+            selectedItemLastNameTextField.setText(selectedEntity.getLastName());
+            selectedItemDescriptionTextField.setText(selectedEntity.getDescription());
+            selectedItemDocIDTextField.setText(String.valueOf(selectedEntity.getDocId()));
+        }
+
+        @Override
+        Client loadItemData() {
+            int id = 0;
+            try {
+                id = Integer.parseInt(selectedItemDocIDTextField.getText());
+            }
+            catch (NumberFormatException e) {
+                System.out.println("loadItemData " + e.getMessage());
+                return null;
+            }
+
+            return new Client(
+                    id,
+                    selectedItemFirstNameTextField.getText(),
+                    selectedItemLastNameTextField.getText(),
+                    selectedItemDescriptionTextField.getText());
+        }
+    }
+
+    //endregion Client
+    
+    
     //region Main Screen
 
     private static class TabButton extends Button implements ActionListener {
@@ -857,6 +1206,7 @@ class SkiDriver {
         if (!success){
             return;
         }
+        populateData();
 
         createMainFrame();
 
@@ -866,6 +1216,8 @@ class SkiDriver {
         SkiTypeAppTab skiTypeAppTab = new SkiTypeAppTab(skiTypeManager);
 
         SkiAppTab skiAppTab = new SkiAppTab(skiManager, skiTypeManager);
+
+        ClientAppTab clientAppTab = new ClientAppTab(clientManager);
 
 
         // Main Space
@@ -879,8 +1231,11 @@ class SkiDriver {
         // Tab Selection Buttons
         TabButton skiTypesTabButton = new TabButton("skitype", skiTypeAppTab);
         TabButton skiTabButton = new TabButton("ski", skiAppTab);
+        TabButton clientTabButton = new TabButton("client", clientAppTab);
+
         skiTypesTabButton.addActionListener(skiTypesTabButton);
         skiTabButton.addActionListener(skiTabButton);
+        clientTabButton.addActionListener(clientTabButton);
 
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -894,12 +1249,15 @@ class SkiDriver {
         mainFrame.add(skiTypesTabButton, gbc);
 
 
-        gbc.gridx = 1;
+        gbc.gridx += 1;
         mainFrame.add(skiTabButton, gbc);
+
+        gbc.gridx += 1;
+        mainFrame.add(clientTabButton, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 3;
 
         gbc.weighty = 1.0;
         gbc.weightx = 1.0;
