@@ -92,7 +92,7 @@ class SkiDriver {
 
 
         // setSize
-        mainFrame.setSize(500, 500);
+        mainFrame.setSize(1000, 500);
     }
 
     //endregion Init
@@ -126,16 +126,6 @@ class SkiDriver {
         return gbc;
     }
 
-
-    private static GridBagConstraints createGbc(int x, int y, int width, boolean verticalFill) {
-        GridBagConstraints gbc = createGbc(x, y, width);
-        if (verticalFill) {
-            gbc.fill = GridBagConstraints.VERTICAL;
-        } else {
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-        }
-        return gbc;
-    }
     //endregion Helpers
 
 
@@ -144,6 +134,13 @@ class SkiDriver {
     private interface searchableTab<E extends Writeable> {
         void selectedItem(E selectedObject);
     }
+
+    private interface EntityPanel {
+        void createItem();
+        void editItem();
+        void deleteItem();
+    }
+
 
     private static class SearchedPositionButton<E extends Writeable> extends Button implements ActionListener {
         E storedEntity;
@@ -163,9 +160,42 @@ class SkiDriver {
     }
 
 
-
+    private static class CreateNewEntityButton extends Button implements ActionListener {
+        EntityPanel panel;
+        CreateNewEntityButton(String buttonText, EntityPanel panel_) {
+            super(buttonText);
+            this.panel = panel_;
+        }
+        public void actionPerformed(ActionEvent e) {
+            //System.out.println("button is pressed  " + this.getLabel());
+            panel.createItem();
+        }
+    }
+    private static class EditEntityButton extends Button implements ActionListener {
+        EntityPanel panel;
+        EditEntityButton(String buttonText, EntityPanel panel_) {
+            super(buttonText);
+            this.panel = panel_;
+        }
+        public void actionPerformed(ActionEvent e) {
+            //System.out.println("button is pressed  " + this.getLabel());
+            panel.editItem();
+        }
+    }
+    private static class DeleteEntityButton extends Button implements ActionListener {
+        EntityPanel panel;
+        DeleteEntityButton(String buttonText, EntityPanel panel_) {
+            super(buttonText);
+            this.panel = panel_;
+        }
+        public void actionPerformed(ActionEvent e) {
+            //System.out.println("button is pressed  " + this.getLabel());
+            panel.deleteItem();
+        }
+    }
 
     //endregion Generic Tab elements
+
 
     //region SkiType
 
@@ -176,12 +206,15 @@ class SkiDriver {
             skiTypeSearchPanel = new SkiTypeSearchPanel(this);
             add(skiTypeSearchPanel);
 
-            skiTypeEntityPanel = new SkiTypeEntityPanel();
+            skiTypeEntityPanel = new SkiTypeEntityPanel(this);
             add(skiTypeEntityPanel);
         }
         
-        //repeatSearch
-        
+
+        public void repeatSearch() {
+            skiTypeSearchPanel.repeatSearch();
+        }
+
 
         @Override
         public void selectedItem(SkiType selectedSkiType) {
@@ -266,25 +299,134 @@ class SkiDriver {
     }
 
 
-    private static class SkiTypeEntityPanel extends JPanel implements ActionListener {
-        JLabel selectedItemName;
-        JLabel selectedItemDescription;
-        SkiTypeEntityPanel() {
-            //Labels
-            selectedItemName = new JLabel("test");
-            selectedItemDescription = new JLabel("dwa");
+    private static class SkiTypeEntityPanel extends JPanel implements ActionListener, EntityPanel {
+        JTextField selectedItemName;
+        JTextField selectedItemDescription;
 
-            add(selectedItemName);
-            add(selectedItemDescription);
+        SkiType selectedEntity;
+
+        SkiAppTab parent;
+
+        SkiTypeEntityPanel(SkiAppTab parent_) {
+            this.parent = parent_;
+            // Elements
+            selectedItemName = new JTextField("");
+            selectedItemDescription = new JTextField("");
+            selectedItemName.setPreferredSize( new Dimension(200, 24));
+            selectedItemDescription.setPreferredSize( new Dimension(200, 24));
+
+            JLabel nameLabel = new JLabel("Name:  ");
+            JLabel descriptionLabel = new JLabel("Description:  ");
+
+
+            CreateNewEntityButton createNewEntityButton = new CreateNewEntityButton("New", this);
+            createNewEntityButton.addActionListener(createNewEntityButton);
+
+            EditEntityButton editEntityButton = new EditEntityButton("Edit", this);
+            editEntityButton.addActionListener(editEntityButton);
+
+            DeleteEntityButton deleteEntityButton = new DeleteEntityButton("Delete", this);
+            deleteEntityButton.addActionListener(deleteEntityButton);
+
+
+            //Layout
+
+
+            setLayout(new GridBagLayout());
+
+            GridBagConstraints gbc = new GridBagConstraints();
+
+
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            int gap = 3;
+            gbc.insets = new Insets(gap, gap, gap, gap);
+            gbc = createGbc(0, 0);
+            gbc.weightx = 0.5;
+
+            // Top left
+            add(nameLabel, gbc);
+
+            // One to the right
+            gbc.gridx += 1;
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedItemName, gbc);
+            gbc.gridwidth = 1;
+
+            // Next Row -> Reset Postion
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(descriptionLabel, gbc);
+
+            // One to the right
+            gbc.gridx += 1;
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedItemDescription, gbc);
+            gbc.gridwidth = 1;
+
+
+            // Next Row -> Reset Postion
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+
+            add(createNewEntityButton, gbc);
+            gbc.gridx += 1;
+            add(editEntityButton, gbc);
+            gbc.gridx += 1;
+            add(deleteEntityButton, gbc);
         }
 
         public void entityLoaded(SkiType selectedEntity) {
             selectedItemName.setText(selectedEntity.getName());
             selectedItemDescription.setText(selectedEntity.getDescription());
+            this.selectedEntity = selectedEntity;
         }
 
         public void actionPerformed(ActionEvent e) {
            
+        }
+
+        @Override
+        public void createItem() {
+            System.out.println("Create");
+            SkiType newSkiType = new SkiType(selectedItemName.getText(), selectedItemDescription.getText());
+
+
+            try {
+                skiTypeManager.addEntity(newSkiType);
+            } catch (SkiAppException e) {
+                System.out.println("Failed to create new SkiType: " + e);
+            }
+            parent.repeatSearch();
+        }
+
+        @Override
+        public void editItem() {
+            System.out.println("Edit");
+            SkiType newSkiType = new SkiType(selectedItemName.getText(), selectedItemDescription.getText());
+
+            try {
+                skiTypeManager.editEntity(selectedEntity, newSkiType);
+            } catch (SkiAppException e) {
+                System.out.println("Failed to edit SkiType: " + e);
+            }
+            parent.repeatSearch();
+        }
+
+        @Override
+        public void deleteItem() {
+            System.out.println("Delete");
+            try {
+                skiTypeManager.removeEntity(selectedEntity);
+            } catch (SkiAppException e) {
+                System.out.println("Failed to delete SkiType: " + e);
+            }
+            parent.repeatSearch();
         }
     }
 
@@ -367,7 +509,7 @@ class SkiDriver {
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
-        
+
         gbc.weighty = 1.0;
         gbc.weightx = 1.0;
 
