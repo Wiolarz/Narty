@@ -23,11 +23,11 @@ public class Rent implements Writeable {
     private final String comment;
     private final RentStatus status;
 
-    public Rent(UUID uuid, Date startDate, Date endDate, Date updatedEndDate, String skiModel, String clientID, String comment, RentStatus status) {
+    public Rent(UUID rentId, Date startDate, Date endDate, Date updatedEndDate, String skiModel, String clientID, String comment, RentStatus status) {
         if (Util.isAnyArgumentNull(startDate, endDate, skiModel, clientID)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
-        this.rentID = (uuid == null) ? UUID.randomUUID() : uuid;
+        this.rentID = (rentId == null) ? UUID.randomUUID() : rentId;
         this.startDate = startDate;
         this.comment = (comment == null) ? "" : comment;
         this.endDate = endDate;

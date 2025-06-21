@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -60,9 +62,9 @@ public class Util {
         calendar.add(Calendar.MONTH, 6);
         Date sixMonthDurationLimit = calendar.getTime();
 
-        return !startDate.before(now) ||
-                !startDate.after(endDate) ||
-                !endDate.after(fiveYearLimit) ||
+        return !startDate.before(now) &&
+                !startDate.after(endDate) &&
+                !endDate.after(fiveYearLimit) &&
                 !endDate.after(sixMonthDurationLimit);
     }
 

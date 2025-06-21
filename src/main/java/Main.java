@@ -9,6 +9,7 @@ import wit.io.utils.Const;
 import wit.io.managers.SkiTypeManager;
 import wit.io.data.SkiType;
 
+import java.util.Calendar;
 import java.util.Date;
 
 
@@ -59,6 +60,13 @@ public class Main {
 
     public static void main(String[] args) throws EntityAlreadyPresentException, ReadingException, WritingException, EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException, SkiAppException {
         RentManager rentManager = new RentManager("src/main/java/wit/io/datasources/rent");
-        //rentManager.addEntity(new Rent(new Date(2025, 06, 10), new Date(2025, 06, 15), 10, 10, "", RentStatus.ACTIVE));
+        rentManager.resetEntityData();
+        rentManager.addEntity(
+                new Rent(null, new Date(125, 5, 19), new Date(125, 5, 24), null, "10", "10", "", RentStatus.ACTIVE)
+        );
+        // todo: +1
+        // Wed Jul 15 00:00:00 CEST 3925
+        // Wed Jul 13 00:00:00 CEST 3925
+        System.out.println(rentManager.getEntitiesList());
     }
 }

@@ -91,15 +91,16 @@ public class RentManagerTest {
     public void givenOverdueRentExistsAndScheduledRentWithNotCollidingStartDate_whenReadingInData_thenRentStatusDoesNotGetUpdated() throws SkiAppException {
         switchToNewTime(getDateForDay(21));
         // this entity is not returned on time
-        UUID.fromString("test")
+        UUID test1 = UUID.fromString("test");
+        UUID test2 = UUID.fromString("test");
         Set<Rent> listOfRentals = new HashSet<>(List.of(
-                new Rent(UUID.fromString("test"), getDateForDay(22), getDateForDay(23), getDateForDay(25), "10", "10", "", RentStatus.OVERDUE),
-                new Rent(UUID.fromString("test1"), getDateForDay(28), getDateForDay(29), null, "10", "10", "", RentStatus.ACTIVE)
+                new Rent(test1, getDateForDay(22), getDateForDay(23), getDateForDay(25), "10", "10", "", RentStatus.OVERDUE),
+                new Rent(test2, getDateForDay(28), getDateForDay(29), null, "10", "10", "", RentStatus.ACTIVE)
         ));
         consumer.accept(listOfRentals);
 
         switchToNewTime(getDateForDay(28));
-        assertEquals(RentStatus.ACTIVE, manager.getEntities().stream().filter((rent) -> rent.getRentID().equals()));
+        assertEquals(RentStatus.ACTIVE, manager.getEntities().stream().filter((rent) -> rent.getRentID().equals(test1)));
 
 
 
