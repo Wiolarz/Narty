@@ -10,6 +10,7 @@ import java.util.Date;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
 public class ReportManager {
@@ -30,7 +31,7 @@ public class ReportManager {
         return null;
     }
 
-    public ArrayList<Ski> rentedSkis(Date startDate) {
+    public LinkedHashSet<Ski> rentedSkis(Date startDate) {
         // startDate now or before now
         Date startDateFilter = (startDate == null) ? new Date() : startDate;
         var skiModels = rentManager.getEntities()
@@ -41,12 +42,12 @@ public class ReportManager {
                 .map(e -> new Ski(new SkiType("", ""), "", e, "", 0.0f))
                 .collect(Collectors.toCollection(HashSet::new));
 
-        HashSet<Ski> skiModelsSet = new HashSet<>(skiManager.getEntities());
         // TODO: return list or set
         // TODO: consider using linkedhashset
-        skiModelsSet.retainAll(skiModels);
-        return null;
+        var result = new LinkedHashSet<>(skiManager.getEntities());
+        result.retainAll(skiModels);
 
+        return result;
         // TODO: test if empty
     }
 }

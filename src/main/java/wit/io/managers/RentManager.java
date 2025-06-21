@@ -8,6 +8,7 @@ import wit.io.utils.Util;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,7 +25,7 @@ public class RentManager extends Manager<Rent> {
     }
     
     private void setOverdue(Date now) {
-        ArrayList<Rent> updatedRents = new ArrayList<>();
+        LinkedHashSet<Rent> updatedRents = new LinkedHashSet<>();
         var it = dataEntities.iterator();
         while(it.hasNext()) {
             Rent rent = it.next();
@@ -40,8 +41,8 @@ public class RentManager extends Manager<Rent> {
     }
 
     private void setFailed(Date now) {
-        ArrayList<Rent> removedRents = new ArrayList<>();
-        ArrayList<Rent> updatedRents = new ArrayList<>();
+        LinkedHashSet<Rent> removedRents = new LinkedHashSet<>();
+        LinkedHashSet<Rent> updatedRents = new LinkedHashSet<>();
         for (Rent rent : dataEntities) {
             // istnieje ACTIVE, który się zaczął, ale istnieje dla niego jakiś OVERDUE
             boolean shouldStartNow = rent.getStatus() == RentStatus.ACTIVE && rent.getStartDate().compareTo(now) <= 0;
@@ -106,7 +107,7 @@ public class RentManager extends Manager<Rent> {
         if (Util.isAnyArgumentNull(oldRent, newRent)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
-        if (oldRent.getStartDate() != newRent.getStartDate() || oldRent.getEndDate() != newRent.getEndDate()  || oldRent.getUpdatedEndDate() != newRent.getUpdatedEndDate()) {
+        if (oldRent.getStartDate() != newRent.getStartDate() || oldRent.getEndDate() != newRent.getEndDate() || oldRent.getUpdatedEndDate() != newRent.getUpdatedEndDate()) {
             validateRent(newRent);
         }
 

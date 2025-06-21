@@ -1,12 +1,10 @@
 package wit.io;
 
-import org.junit.jupiter.api.AfterAll;
 import wit.io.exceptions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import wit.io.data.SkiType;
 import wit.io.managers.SkiTypeManager;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,8 +56,8 @@ class SkiTypeManagerTest
         manager.addEntity(new SkiType("newName", "aaa"));
 
         assertEquals(1, manager.getEntities().size());
-        assertEquals("newName", manager.getEntities().get(0).getName());
-        assertEquals("aaa", manager.getEntities().get(0).getDescription());
+        assertEquals("newName", manager.getEntitiesList().get(0).getName());
+        assertEquals("aaa", manager.getEntitiesList().get(0).getDescription());
     }
 
     @Test
@@ -136,7 +134,7 @@ class SkiTypeManagerTest
         // then
         assertEquals(3, manager.getEntities().size());
         for (int i = 0; i<manager.getEntities().size(); i++) {
-            assertEquals(listOfSkis.get(i), manager.getEntities().get(i));
+            assertEquals(listOfSkis.get(i), manager.getEntitiesList().get(i));
         }
     }
 
@@ -152,7 +150,7 @@ class SkiTypeManagerTest
 
         // then
         assertEquals(1, manager.getEntities().size());
-        assertEquals(newSkiType, manager.getEntities().get(0));
+        assertEquals(newSkiType, manager.getEntitiesList().get(0));
     }
 
     @Test
@@ -167,7 +165,7 @@ class SkiTypeManagerTest
 
         // then
         assertEquals(1, manager.getEntities().size());
-        assertEquals(newSkiType, manager.getEntities().get(0));
+        assertEquals(newSkiType, manager.getEntitiesList().get(0));
     }
 
     @Test

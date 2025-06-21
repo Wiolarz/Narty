@@ -1,7 +1,6 @@
 package wit.io;
 
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import wit.io.data.Ski;
@@ -58,7 +57,7 @@ public class SkiManagerTest {
         // then
         assertEquals(3, skiManager.getEntities().size());
         for (int i = 0; i<skiManager.getEntities().size(); i++) {
-            assertEquals(listOfSkis.get(i), skiManager.getEntities().get(i));
+            assertEquals(listOfSkis.get(i), skiManager.getEntitiesList().get(i));
         }
     }
 
@@ -78,7 +77,7 @@ public class SkiManagerTest {
     public void givenSkiDoesNotExist_whenAddingNewType_thenAddToSkis() throws SkiAppException {
         skiManager.addEntity(new Ski(new SkiType("name1", "description1"), "brand1", "model1", "bond1", 1f));
 
-        Ski ski = skiManager.getEntities().get(0);
+        Ski ski = skiManager.getEntitiesList().get(0);
         assertEquals(1, skiManager.getEntities().size());
         assertEquals("name1", ski.getType().getName());
         assertEquals("description1", ski.getType().getDescription());
@@ -134,7 +133,7 @@ public class SkiManagerTest {
 
         skiManager.editEntity(oldSki, updatedSki);
 
-        assertEquals(updatedSki, skiManager.getEntities().get(0));
+        assertEquals(updatedSki, skiManager.getEntitiesList().get(0));
         assertEquals(1, skiManager.getEntities().size());
     }
 
@@ -146,7 +145,7 @@ public class SkiManagerTest {
 
         assertThrows(IllegalArgumentException.class, () -> skiManager.editEntity(oldSki, null));
         assertEquals(1, skiManager.getEntities().size());
-        assertEquals(oldSki, skiManager.getEntities().get(0));
+        assertEquals(oldSki, skiManager.getEntitiesList().get(0));
     }
 
     @Test

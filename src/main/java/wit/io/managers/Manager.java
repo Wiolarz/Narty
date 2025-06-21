@@ -7,11 +7,13 @@ import wit.io.utils.Writeable;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.List;
 
 // TODO: SWING
 public abstract class Manager<T extends Writeable> {
-    protected List<T> dataEntities;
+    protected Set<T> dataEntities;
     protected File file;
 
     public abstract void readFromFile() throws ReadingException;
@@ -22,7 +24,7 @@ public abstract class Manager<T extends Writeable> {
         }
 
         file = new File(filePath);
-        dataEntities = new ArrayList<>();
+        dataEntities = new LinkedHashSet<>();
 
         if(!file.exists()) {
             return;
@@ -61,7 +63,7 @@ public abstract class Manager<T extends Writeable> {
     }
 
     public void resetEntityData() throws WritingException{
-        dataEntities = new ArrayList<>();
+        dataEntities = new LinkedHashSet<>();
         writeToFile();
     }
 
@@ -69,7 +71,8 @@ public abstract class Manager<T extends Writeable> {
         if (Util.isAnyArgumentNull(newEntity)) {
             throw new IllegalArgumentException("newEntity cannot be null.");
         }
-        if (entityExists(newEntity)) {
+
+        if (dataEntities.contains(newEntity)) {
             throw new EntityAlreadyPresentException("Exception occurred adding new newEntity Type." + newEntity.toString());
         }
 
@@ -82,7 +85,7 @@ public abstract class Manager<T extends Writeable> {
         if (Util.isAnyArgumentNull(entity)) {
             throw new IllegalArgumentException("entity cannot be null.");
         }
-        if (!entityExists(entity)) {
+        if (dataEntities.contains(entity)) {
             throw new EntityNotPresentException("Error removing e.");
         }
         // TODO: custom equals
@@ -97,19 +100,13 @@ public abstract class Manager<T extends Writeable> {
         }
         removeEntity(oldEntity);
         addEntity(newEntity);
-
     }
 
-    public List<T> getEntities() {
+    public Set<T> getEntities() {
         return dataEntities;
     }
 
-
-    private boolean entityExists(T entity) {
-        for (T e : dataEntities) {
-            if (e.equals(entity))
-                return true;
-        }
-        return false;
+    public ArrayList<T> getEntitiesList() {
+        return new ArrayList<>(dataEntities);
     }
 }
