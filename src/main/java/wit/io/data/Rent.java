@@ -23,11 +23,11 @@ public class Rent implements Writeable {
     private final String comment;
     private final RentStatus status;
 
-    public Rent(Date startDate, Date endDate, Date updatedEndDate, String skiModel, String clientID, String comment, RentStatus status) {
+    public Rent(UUID uuid, Date startDate, Date endDate, Date updatedEndDate, String skiModel, String clientID, String comment, RentStatus status) {
         if (Util.isAnyArgumentNull(startDate, endDate, skiModel, clientID)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
-        this.rentID = UUID.randomUUID();
+        this.rentID = (uuid == null) ? UUID.randomUUID() : uuid;
         this.startDate = startDate;
         this.comment = (comment == null) ? "" : comment;
         this.endDate = endDate;
@@ -71,6 +71,7 @@ public class Rent implements Writeable {
     }
 
     public void writeData(DataOutputStream output) throws IOException {
+        output.writeUTF(rentID.toString());
         output.writeUTF(skiModel);
         output.writeUTF(docID);
         output.writeUTF(Util.dateToString(startDate));
@@ -81,6 +82,7 @@ public class Rent implements Writeable {
     }
 
     public static Rent readData(DataInputStream input) throws IOException {
+        UUID rentID = UUID.fromString(input.readUTF());
         String skiModel = input.readUTF();
         String docId = input.readUTF();
         Date startDate, endDate, updatedEndDate;
@@ -94,15 +96,15 @@ public class Rent implements Writeable {
         String comment = input.readUTF();
         RentStatus rentStatus = RentStatus.valueOf(input.readUTF());
 
-        return new Rent(startDate, endDate, updatedEndDate, skiModel, docId, comment, rentStatus);
+        return new Rent(rentID, startDate, endDate, updatedEndDate, skiModel, docId, comment, rentStatus);
     }
 
     public Rent setStatus(RentStatus newStatus) {
-        return new Rent(startDate, endDate, updatedEndDate, skiModel, docID, comment, newStatus);
+        return new Rent(rentID, startDate, endDate, updatedEndDate, skiModel, docID, comment, newStatus);
     }
 
     public Rent setUpdatedEndDate(Date newUpdatedEndDate) {
-        return new Rent(startDate, endDate, newUpdatedEndDate, skiModel, docID, comment, status);
+        return new Rent(rentID, startDate, endDate, newUpdatedEndDate, skiModel, docID, comment, status);
     }
 
     public UUID getRentID() {

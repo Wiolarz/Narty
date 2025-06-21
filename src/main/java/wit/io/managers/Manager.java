@@ -85,11 +85,11 @@ public abstract class Manager<T extends Writeable> {
         if (Util.isAnyArgumentNull(entity)) {
             throw new IllegalArgumentException("entity cannot be null.");
         }
-        if (dataEntities.contains(entity)) {
+        if (!dataEntities.contains(entity)) {
             throw new EntityNotPresentException("Error removing e.");
         }
         // TODO: custom equals
-        dataEntities.removeIf(s -> s.equals(entity));
+        dataEntities.remove(entity);
         writeToFile();
     }
 
@@ -104,6 +104,11 @@ public abstract class Manager<T extends Writeable> {
 
     public Set<T> getEntities() {
         return dataEntities;
+    }
+
+    public void setEntities(Set<T> setDataEntities) throws WritingException {
+        dataEntities = setDataEntities;
+        writeToFile();
     }
 
     public ArrayList<T> getEntitiesList() {

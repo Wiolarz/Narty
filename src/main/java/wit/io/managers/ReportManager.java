@@ -28,7 +28,16 @@ public class ReportManager {
     }
 
     public ArrayList<Ski> overdueSkis() {
+//        var skiModels = rentManager.getEntities()
+//                .stream()
+//                .filter(e.getStatus() == RentStatus.OVERDUE)
+//                .collect(Collectors.toCollection(HashSet::new));
+//
+//        var result = new LinkedHashSet<>(skiManager.getEntities());
+//        result.retainAll(skiModels);
+
         return null;
+
     }
 
     public LinkedHashSet<Ski> rentedSkis(Date startDate) {
@@ -40,14 +49,16 @@ public class ReportManager {
                 .filter(e -> !e.getStartDate().after(startDateFilter))
                 .map(Rent::getSkiModel)
                 .map(e -> new Ski(new SkiType("", ""), "", e, "", 0.0f))
-                .collect(Collectors.toCollection(HashSet::new));
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // TODO: return list or set
-        // TODO: consider using linkedhashset
+        return getSelectedSkis(skiModels);
+        // TODO: test if empty
+    }
+
+    private LinkedHashSet<Ski> getSelectedSkis(LinkedHashSet<Ski> selectedSkis) {
         var result = new LinkedHashSet<>(skiManager.getEntities());
-        result.retainAll(skiModels);
+        result.retainAll(selectedSkis);
 
         return result;
-        // TODO: test if empty
     }
 }

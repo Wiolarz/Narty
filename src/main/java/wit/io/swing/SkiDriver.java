@@ -15,12 +15,15 @@ import wit.io.utils.Writeable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 import java.awt.event.*;
+import java.awt.Button;
+import java.awt.Dimension;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 class SkiDriver {
 
@@ -92,9 +95,9 @@ class SkiDriver {
         clientManager.addEntity(client3);
 
 
-        Rent rent1 = new Rent(new Date(), new Date(), new Date(), ski1.getModel(), client1.getDocId(), "pierwsze wypozyczenia", RentStatus.ACTIVE);
-        Rent rent2 = new Rent(new Date(), new Date(), new Date(), ski2.getModel(), client2.getDocId(), "drugie wypozyczenia", RentStatus.ACTIVE);
-        Rent rent3 = new Rent(new Date(), new Date(), new Date(), ski3.getModel(), client3.getDocId(), "trzemcie wypozyczenia", RentStatus.ACTIVE);
+        Rent rent1 = new Rent(null, new Date(), new Date(), new Date(), ski1.getModel(), client1.getDocId(), "pierwsze wypozyczenia", RentStatus.ACTIVE);
+        Rent rent2 = new Rent(null, new Date(), new Date(), new Date(), ski2.getModel(), client2.getDocId(), "drugie wypozyczenia", RentStatus.ACTIVE);
+        Rent rent3 = new Rent(null, new Date(), new Date(), new Date(), ski3.getModel(), client3.getDocId(), "trzemcie wypozyczenia", RentStatus.ACTIVE);
         rentManger.addEntity(rent1);
         rentManger.addEntity(rent2);
         rentManger.addEntity(rent3);
@@ -119,6 +122,7 @@ class SkiDriver {
     }
 
     //endregion Init
+
 
     //region Helpers
 
@@ -177,7 +181,7 @@ class SkiDriver {
                         char key = ke.getKeyChar();
                         if (!(Character.isLetterOrDigit(key) || Character.isSpaceChar(key) )) return;
                         caretPos = tfield.getCaretPosition();
-                        String text="";
+                        String text = "";
                         try {
                             text = tfield.getText(0, caretPos);
                         } catch (javax.swing.text.BadLocationException e) {
@@ -196,7 +200,14 @@ class SkiDriver {
         }
     }
 
-
+    static AutoCompleteComboBox createAutoCompleteSearchComboBox(Object[] addAnyToMe) {
+        Object[] newMe = new Object[addAnyToMe.length + 1];
+        newMe[0] = (Object) "Any";
+        for(int i = 0; i < addAnyToMe.length; i++){
+            newMe[i + 1] = addAnyToMe[i];
+        }
+        return new AutoCompleteComboBox(newMe);
+    }
 
 
     //endregion Helpers
@@ -336,11 +347,11 @@ class SkiDriver {
         }
 
         final void createItem() {
+            E newEntity = loadItemData();
             try {
-                E newEntity = loadItemData();
                 manager.addEntity(newEntity);
             } catch (SkiAppException e) { // TODO consider Split error message so that it can cover case if loading item data was successful
-                System.out.println("Failed to create new SkiType. Error: " + e);
+                System.out.println("Failed to create new SkiType. " + newEntity.toString() + " Error: " + e);
             }
 
         }
@@ -743,7 +754,7 @@ class SkiDriver {
             deleteEntityButton.addActionListener(deleteEntityButton);
 
 
-            this.skiTypes = this.skiTypeManager.getEntities();
+            this.skiTypes = this.skiTypeManager.getEntitiesList();
             String[] skiTypeNames = new String[this.skiTypes.size()];
             for (int i = 0; i < skiTypes.size(); i++) {
                 skiTypeNames[i] = skiTypes.get(i).getName();
@@ -1225,22 +1236,22 @@ class SkiDriver {
 
             // ComboBoxes:
 
-            this.clients = this.clientManager.getEntities();
+            this.clients = this.clientManager.getEntitiesList();
             String[] clientsNames = new String[this.clients.size()];
             for (int i = 0; i < this.clients.size(); i++) {
                 clientsNames[i] = this.clients.get(i).getFirstName();
             }
 
-            this.skis = this.skiManager.getEntities();
+            this.skis = this.skiManager.getEntitiesList();
             String[] skiNames = new String[this.skis.size()];
             for (int i = 0; i < this.skis.size(); i++) {
                 skiNames[i] = this.skis.get(i).getModel();
             }
 
 
-            searchItemClientComboBox = new AutoCompleteComboBox(clientsNames);
-            searchItemSkiComboBox = new AutoCompleteComboBox(skiNames);
-            searchItemRentStatusComboBox = new AutoCompleteComboBox(RentStatus.values());
+            searchItemClientComboBox = createAutoCompleteSearchComboBox(clientsNames);
+            searchItemSkiComboBox = createAutoCompleteSearchComboBox(skiNames);
+            searchItemRentStatusComboBox = createAutoCompleteSearchComboBox(RentStatus.values());
 
             AutoCompleteComboBox[] comboBoxes = {
                     searchItemClientComboBox,
@@ -1328,6 +1339,7 @@ class SkiDriver {
             Date startDate = null;
             Date endDate = null;
             Date updatedEndDate = null;
+            String comment = searchComment.getText();
             try{
                 startDate = Util.stringToDate(searchStartDate.getText());
             }
@@ -1342,13 +1354,24 @@ class SkiDriver {
             catch (ParseException ignore){}
 
 
+            RentStatus status;
+            if (searchItemRentStatusComboBox.getSelectedItem().toString().equals("Any")) {
+                status = null;
+            } else {
+                status = RentStatus.valueOf(searchItemRentStatusComboBox.getSelectedItem().toString());
+            }
+
+
             return manager.search(
-                    (String)searchItemSkiComboBox.getSelectedItem(),   //searchSkiModel.getText()
-                    (String)searchItemClientComboBox.getSelectedItem(),   //searchDocID.getText()
+                    ((String)searchItemSkiComboBox.getSelectedItem()).equals("Any")  ?
+                            null : (String)searchItemSkiComboBox.getSelectedItem(),
+                    ((String)searchItemClientComboBox.getSelectedItem()) == "Any" ?
+                            null : (String)searchItemClientComboBox.getSelectedItem(),
                     startDate,
                     endDate,
                     updatedEndDate,
-                    RentStatus.valueOf((String)searchItemRentStatusComboBox.getSelectedItem());
+                    comment,
+                    status
             );
         }
 
@@ -1427,20 +1450,20 @@ class SkiDriver {
 
             // ComboBoxes:
 
-            this.clients = this.clientManager.getEntities();
+            this.clients = this.clientManager.getEntitiesList();
             String[] clientsNames = new String[this.clients.size()];
             for (int i = 0; i < this.clients.size(); i++) {
-                clientsNames[i] = this.clients.get(i).getFirstName(); // TODO
+                clientsNames[i] = this.clients.get(i).getFirstName();
             }
 
-            this.skis = this.skiManager.getEntities();
+            this.skis = this.skiManager.getEntitiesList();
             String[] skiNames = new String[this.skis.size()];
             for (int i = 0; i < this.skis.size(); i++) {
-                skiNames[i] = this.skis.get(i).getModel(); // TODO
+                skiNames[i] = this.skis.get(i).getModel();
             }
 
 
-            selectedItemClientComboBox = new AutoCompleteComboBox(clientsNames); //TODO
+            selectedItemClientComboBox = new AutoCompleteComboBox(clientsNames);
             selectedItemSkiComboBox = new AutoCompleteComboBox(skiNames);
             selectedItemRentStatusComboBox = new AutoCompleteComboBox(RentStatus.values());
 
@@ -1461,10 +1484,7 @@ class SkiDriver {
 
 
             //Layout
-            //
             Dimension defaultFieldDimension = new Dimension(200, 24);
-//            selectedSkiModel.setPreferredSize(defaultFieldDimension);
-//            docIDLabel.setPreferredSize(defaultFieldDimension);
             startDateLabel.setPreferredSize(defaultFieldDimension);
             endDateLabel.setPreferredSize(defaultFieldDimension);
             updatedEndDateLabel.setPreferredSize(defaultFieldDimension);
@@ -1606,6 +1626,8 @@ class SkiDriver {
             selectedStartDate.setText(Util.dateToString(selectedEntity.getStartDate()));
             selectedEndDate.setText(Util.dateToString(selectedEntity.getEndDate()));
             selectedUpdatedEndDate.setText(Util.dateToString(selectedEntity.getUpdatedEndDate()));
+
+
             selectedComment.setText(selectedEntity.getComment());
 
 
@@ -1647,17 +1669,26 @@ class SkiDriver {
         Rent loadItemData() {
 
             Date startDate = null;
+            try {
+                startDate = Util.stringToDate(selectedStartDate.getText());
+            } catch (ParseException ignored) {}
             Date endDate = null;
+            try {
+                endDate = Util.stringToDate(selectedEndDate.getText());
+            } catch (ParseException ignored) {}
             Date updatedEndDate = null;
-            String comment = null;
+            try {
+                updatedEndDate = Util.stringToDate(selectedUpdatedEndDate.getText());
+            } catch (ParseException ignored) {}
+            String comment = selectedComment.getText();
 
             String SkiModel = skis.get(selectedItemSkiComboBox.getSelectedIndex()).getModel();
             String clientID = clients.get(selectedItemClientComboBox.getSelectedIndex()).getDocId();
-            RentStatus rentStatus = RentStatus.valueOf((String)selectedItemRentStatusComboBox.getSelectedItem()); // todo: chceck if it works
+            RentStatus rentStatus = RentStatus.valueOf(selectedItemRentStatusComboBox.getSelectedItem().toString());
 
 
             return new Rent(
-                    startDate, endDate, updatedEndDate, SkiModel, clientID, comment, rentStatus
+                    null, startDate, endDate, updatedEndDate, SkiModel, clientID, comment, rentStatus
             );
         }
     }
@@ -1789,7 +1820,7 @@ class SkiDriver {
 //        SkiType[] controlledSkiTypes = null;
 //
 //        public static void getSkiTypes() {
-//            controlledSkiTypes = skiTypeManager.getEntities();
+//            controlledSkiTypes = skiTypeManager.getEntitiesList();
 //            String[] skiTypeNames = new String[this.skiTypes.size()];
 //            for (int i = 0; i < skiTypes.size(); i++) {
 //                skiTypeNames[i] = skiTypes.get(i).getName();
