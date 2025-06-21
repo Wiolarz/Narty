@@ -15,10 +15,9 @@ public class Ski implements Writeable {
 
      */
 
-    private final int id;
+    private final String model; // PK
     private final SkiType type;
     private final String brand;
-    private final String model;
     private final String bonds;
     private final Float length;
 
@@ -27,7 +26,6 @@ public class Ski implements Writeable {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
 
-        this.id = hashCode();
         this.type = type;
         this.brand = brand;
         this.model = model;
@@ -37,7 +35,7 @@ public class Ski implements Writeable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, brand, model, bonds, length);
+        return model.hashCode();
     }
 
     @Override
@@ -56,8 +54,7 @@ public class Ski implements Writeable {
     @Override
     public String toString() {
         return "Ski{" +
-                "id=" + id +
-                ", type=" + type +
+                "type=" + type +
                 ", brand='" + brand + '\'' +
                 ", model='" + model + '\'' +
                 ", bonds='" + bonds + '\'' +
@@ -84,10 +81,6 @@ public class Ski implements Writeable {
 
         SkiType skiType = new SkiType(typeName, typeDescription);
         return new Ski(skiType, brand, model, bonds, length);
-    }
-
-    public int getId() {
-        return id;
     }
 
     public SkiType getType() {

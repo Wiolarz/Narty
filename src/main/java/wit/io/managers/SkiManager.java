@@ -52,6 +52,5 @@ public class SkiManager extends Manager<Ski> {
 
         return stream.collect(Collectors.toCollection(ArrayList::new));
 
-        // todo: test: stream w pierwszym ifie zwróci 0 elementów
     }
 }

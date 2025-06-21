@@ -1,14 +1,13 @@
 package wit.io;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import wit.io.data.Ski;
 import wit.io.data.SkiType;
 import wit.io.exceptions.*;
 import wit.io.managers.SkiManager;
-
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -36,6 +35,11 @@ public class SkiManagerTest {
         } catch (WritingException | ReadingException e) {
             fail(e.getMessage());
         }
+    }
+    
+    @AfterAll
+    public static void tearDown() throws ReadingException, WritingException {
+        new SkiManager("src/test/java/wit/io/datasources/ski").resetEntityData();
     }
 
     @Test

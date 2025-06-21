@@ -112,6 +112,4 @@ public abstract class Manager<T extends Writeable> {
         }
         return false;
     }
-
-
 }

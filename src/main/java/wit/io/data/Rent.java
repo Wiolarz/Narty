@@ -10,9 +10,11 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Objects;
+import java.util.UUID;
 
 public class Rent implements Writeable {
-    private final Integer rentID;
+    private final UUID rentID; // PK
+
     private final Integer skiID;
     private final Integer docID;
     private final Date startDate;
@@ -25,7 +27,7 @@ public class Rent implements Writeable {
         if (Util.isAnyArgumentNull(startDate, endDate, skiID, clientID)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
-        this.rentID = hashCode();
+        this.rentID = UUID.randomUUID();
         this.startDate = startDate;
         this.comment = (comment == null) ? "" : comment;
         this.endDate = endDate;
@@ -39,7 +41,7 @@ public class Rent implements Writeable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(startDate, endDate, skiID, docID, comment, status);
+        return rentID.hashCode();
     }
 
     @Override
@@ -65,7 +67,7 @@ public class Rent implements Writeable {
             return false;
         }
 
-        return ((Rent) o).hashCode() == (o.hashCode());
+        return ((Rent) o).hashCode() == (this.hashCode());
     }
 
     public void writeData(DataOutputStream output) throws IOException {
@@ -103,7 +105,7 @@ public class Rent implements Writeable {
         return new Rent(startDate, endDate, newUpdatedEndDate, skiID, docID, comment, status);
     }
 
-    public Integer getRentID() {
+    public UUID getRentID() {
         return rentID;
     }
 

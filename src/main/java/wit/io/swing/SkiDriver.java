@@ -3,21 +3,23 @@ package wit.io.swing;
 // Java Program to create a SkiDriver class to run
 // the toast class
 import wit.io.data.Client;
+import wit.io.data.Rent;
 import wit.io.data.Ski;
 import wit.io.data.SkiType;
+import wit.io.data.enums.RentStatus;
 import wit.io.exceptions.*;
-import wit.io.managers.Manager;
-import wit.io.managers.SkiManager;
-import wit.io.managers.SkiTypeManager;
-import wit.io.managers.ClientManager;
+import wit.io.managers.*;
 import wit.io.utils.Const;
+import wit.io.utils.Util;
 import wit.io.utils.Writeable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import java.awt.*;
 import java.awt.event.*;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 class SkiDriver {
@@ -276,7 +278,7 @@ class SkiDriver {
         //TODO implement safer constructor
         GenericAppTab<E, M> parent;
         JPanel searchResultsPanel;
-        
+
         protected abstract ArrayList<E> performSearch(); // TODO make it even more secure, by forcing overriding of arguments collection
 
         public final void actionPerformed(ActionEvent e) {
@@ -361,15 +363,15 @@ class SkiDriver {
             add(entityPanel);
         }
     }
-    
-    
+
+
     private static class SkiTypeSearchPanel extends SearchPanel<SkiType, SkiTypeManager> {
         // as search() can have any combination of types of arguments, it cannot be generalised //TODO verify if its true
         SkiTypeManager manager;
-        
+
         JTextField searchNameTextField;
         JTextField searchDescriptionTextField;
-        
+
 
         SkiTypeSearchPanel(SkiTypeManager manager_, SkiTypeAppTab parent_) {
             this.manager = manager_;
@@ -396,7 +398,7 @@ class SkiDriver {
             add(searchButton, createGbc(0, 2, 2));
             add(searchResultsPanel, createGbc(0, 3));
 
-            
+
             // Show all items
             ArrayList<SkiType> results = this.manager.search(null, null);
             loadSearchResults(results);
@@ -646,7 +648,7 @@ class SkiDriver {
 //
 //            String typeName = selectedEntity.getType().getName();
 //
-//            // TODO: optimise this  | save this value and use it here String[] skiTypeNames = new String[skiTypes.size()];
+//            // TODO: optimise this  | save this value and use it here String[] skiTypeNames = new String[skiTypes.size()]; uwu
 //            int itemIndex = 0;
 //            for (int i = 0; i < selectedItemSkiTypeComboBox.getSize().getWidth(); i++){
 //                if(selectedItemSkiTypeComboBox.getItemAt(i).equals(typeName)){
@@ -1155,17 +1157,8 @@ class SkiDriver {
 
         @Override
         Client loadItemData() {
-            int id = 0;
-            try {
-                id = Integer.parseInt(selectedItemDocIDTextField.getText());
-            }
-            catch (NumberFormatException e) {
-                System.out.println("loadItemData " + e.getMessage());
-                return null;
-            }
-
             return new Client(
-                    id,
+                    selectedItemDocIDTextField.getText(),
                     selectedItemFirstNameTextField.getText(),
                     selectedItemLastNameTextField.getText(),
                     selectedItemDescriptionTextField.getText());
@@ -1173,8 +1166,509 @@ class SkiDriver {
     }
 
     //endregion Client
-    
-    
+
+
+
+
+
+
+    //region Rent
+
+    private static class RentAppTab extends GenericAppTab<Rent, RentManager> {
+        RentAppTab(RentManager manager_, ClientManager clientManager_, SkiManager skiManager_) {
+            searchPanel = new RentSearchPanel(manager_, this);
+            add(searchPanel);
+
+            entityPanel = new RentEntityPanel(manager_, this, clientManager_, skiManager_);
+            add(entityPanel);
+        }
+    }
+
+    private static class RentSearchPanel extends SearchPanel<Rent, RentManager> {
+        // as search() can have any combination of types of arguments, it cannot be generalised //TODO verify if its true
+        RentManager manager;
+
+
+
+        JTextField searchSkiID;
+        JTextField searchDocID;
+        JTextField searchStartDate;
+        JTextField searchEndDate;
+        JTextField searchUpdatedEndDate;
+        JTextField searchComment;
+        //JTextField searchRentStatus; todo: make comboBox
+        // todo: add ski type
+
+        RentSearchPanel(RentManager manager_, RentAppTab parent_) {
+            this.manager = manager_;
+            this.parent = parent_;
+
+            JLabel skiIDLabel = new JLabel("Ski ID:  ");
+            JLabel docIDLabel = new JLabel("Document ID:  ");
+            JLabel startDateLabel = new JLabel("Start date:  ");
+            JLabel endDateLabel = new JLabel("End date:  ");
+            JLabel updatedEndDateLabel = new JLabel("Updated end date:  ");
+            JLabel rentStatusLabel = new JLabel("Rent status:  ");
+            JLabel skiTypeLabel = new JLabel("Ski type:  ");
+
+
+            this.searchSkiID = new JTextField();
+            this.searchDocID = new JTextField();
+            this.searchStartDate = new JTextField();
+            this.searchEndDate = new JTextField();
+            this.searchUpdatedEndDate = new JTextField();
+            this.searchComment = new JTextField();
+
+            // button
+            Button searchButton = new Button("search");
+            // add action listener
+            searchButton.addActionListener(this);
+
+            this.searchResultsPanel = new JPanel();
+
+
+            //LAYOUT
+            setLayout(new GridBagLayout());
+
+
+            Dimension defaultFieldDimension = new Dimension(200, 24);
+            searchSkiID.setPreferredSize(defaultFieldDimension);
+            searchDocID.setPreferredSize(defaultFieldDimension);
+            searchStartDate.setPreferredSize(defaultFieldDimension);
+            searchEndDate.setPreferredSize(defaultFieldDimension);
+            searchUpdatedEndDate.setPreferredSize(defaultFieldDimension);
+            searchComment.setPreferredSize(defaultFieldDimension);
+
+
+            int row = 0;
+            int column = 0;
+
+            add(skiIDLabel, createGbc(column, row));
+            row += 1;
+            add(docIDLabel, createGbc(column, row));
+            row += 1;
+            add(startDateLabel, createGbc(column, row));
+            row += 1;
+            add(endDateLabel, createGbc(column, row));
+            row += 1;
+            add(updatedEndDateLabel, createGbc(column, row));
+            row += 1;
+            add(rentStatusLabel, createGbc(column, row));
+            row += 1;
+            add(skiTypeLabel, createGbc(column, row));
+
+            column +=1; row = 0;
+
+            add(this.searchSkiID, createGbc(column, row));
+            row += 1;
+            add(this.searchDocID,  createGbc(column, row));
+            row += 1;
+            add(this.searchStartDate,  createGbc(column, row));
+            row += 1;
+            add(this.searchEndDate,  createGbc(column, row));
+            row += 1;
+            add(this.searchUpdatedEndDate,  createGbc(column, row));
+            row += 1;
+            add(this.searchComment,  createGbc(column, row));
+            row += 1;
+            add(this.searchUpdatedEndDate,  createGbc(column, row));
+
+            column = 0; row +=1;
+
+            add(searchButton, createGbc(column, row, 2));
+
+            row += 1;
+            add(searchResultsPanel, createGbc(column, row));
+
+
+            // Show all items
+            ArrayList<Rent> results = this.manager.search(null, null, null, null, null, null, null);
+            loadSearchResults(results);
+        }
+
+        @Override
+        protected ArrayList<Rent> performSearch() {
+
+            RentType searchedRentType = null;
+//
+//            String typeName = selectedEntity.getType().getName();
+//
+//            // TODO: optimise this  | save this value and use it here String[] skiTypeNames = new String[skiTypes.size()]; uwu
+//            int itemIndex = 0;
+//            for (int i = 0; i < selectedItemRentTypeComboBox.getSize().getWidth(); i++){
+//                if(selectedItemRentTypeComboBox.getItemAt(i).equals(typeName)){
+//                    itemIndex = i;
+//                    break;
+//                }
+//            }
+//            selectedItemSkiTypeComboBox.setSelectedIndex(itemIndex);
+
+            //RentType type, String brand, String model, String bonds, Float minLength, Float maxLength  //TODO fix
+            return manager.search(
+                    searchSkiID.getText(),
+                    searchDocID.getText(),
+                    searchStartDate.getText(),
+                    searchEndDate.getText(),
+                    searchUpdatedEndDate.getText(),
+                    searchUpdatedEndDate.getText(),
+                    null //todo: comboBox
+            );
+        }
+
+
+        public void loadSearchResults(ArrayList<Ski> searchResults) {
+            searchResultsPanel.removeAll();
+
+            int number_of_results = searchResults.size();
+            if (number_of_results == 0) {
+                number_of_results = 1;  // Grid layout cannot be set to 0
+                JLabel noResultsLabel = new JLabel("No results");
+                searchResultsPanel.add(noResultsLabel);
+
+            }
+
+            searchResultsPanel.setLayout(new GridLayout(number_of_results, 1));
+            for (Rent skiItem : searchResults) {
+                System.out.println(skiItem.toString());
+                SearchedPositionButton<Rent> skiResult = new SearchedPositionButton<>(skiItem.getBrand() + " " + skiItem.getModel(), skiItem, parent);
+
+                skiResult.addActionListener(skiResult);
+
+                searchResultsPanel.add(skiResult);
+            }
+            driver.refresh();
+            System.out.println("End of Search");
+        }
+    }
+
+
+    private static class RentEntityPanel extends EntityPanel<Rent, RentManager>  {
+        ClientManager clientManager;
+        SkiManager skiManager;
+
+        JTextField selectedSkiID;
+        JTextField selectedDocID;
+        JTextField selectedStartDate;
+        JTextField selectedEndDate;
+        JTextField selectedUpdatedEndDate;
+        JTextField selectedComment;
+
+        // todo: make comboBox
+        // todo: add ski
+        // TODO make everything here xd
+
+        AutoCompleteComboBox selectedItemRentStatusComboBox;
+        AutoCompleteComboBox selectedItemClientComboBox;
+        AutoCompleteComboBox selectedItemSkiComboBox;
+
+
+        List<Client> clients;
+        List<Ski> skis;
+
+
+        RentEntityPanel(RentManager manager_, RentAppTab parent_, ClientManager clientManager_, SkiManager skiManager_){
+            this.manager = manager_;
+            this.parent = parent_;
+            this.clientManager = clientManager_;
+            this.skiManager = skiManager_;
+
+
+            // Elements
+
+            this.selectedSkiID = new JTextField("");
+            this.selectedDocID = new JTextField("");
+            this.selectedStartDate = new JTextField("");
+            this.selectedEndDate = new JTextField("");
+            this.selectedUpdatedEndDate = new JTextField("");
+            this.selectedComment = new JTextField("");
+
+
+            JLabel skiIDLabel = new JLabel("Ski ID:  ");
+            JLabel docIDLabel = new JLabel("Document ID:  ");
+            JLabel startDateLabel = new JLabel("Start date:  ");
+            JLabel endDateLabel = new JLabel("End date:  ");
+            JLabel updatedEndDateLabel = new JLabel("Updated end date:  ");
+            JLabel commentLabel = new JLabel("Updated end date:  ");
+            JLabel clientComboBoxLabel = new JLabel("Rent status:  ");
+            JLabel skiComboBoxLabel = new JLabel("Ski type:  ");
+            JLabel rentStatusComboBoxLabel = new JLabel("Rent status:  ");
+
+
+            // ComboBoxes:
+
+            this.clients = this.clientManager.getEntities();
+            String[] clientsNames = new String[this.clients.size()];
+            for (int i = 0; i < this.clients.size(); i++) {
+                clientsNames[i] = this.clients.get(i).getFirstName(); // TODO
+            }
+
+            this.skis = this.skiManager.getEntities();
+            String[] skiNames = new String[this.skis.size()];
+            for (int i = 0; i < this.skis.size(); i++) {
+                skiNames[i] = this.skis.get(i).getModel(); // TODO
+            }
+
+
+            selectedItemClientComboBox = new AutoCompleteComboBox(clientsNames); //TODO
+            selectedItemSkiComboBox = new AutoCompleteComboBox(skiNames);
+            selectedItemRentStatusComboBox = new AutoCompleteComboBox(RentStatus.values());
+
+
+
+
+            CreateNewEntityButton<Rent, RentManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
+            createNewEntityButton.addActionListener(createNewEntityButton);
+
+            EditEntityButton<Rent, RentManager> editEntityButton = new EditEntityButton<>("Edit", this);
+            editEntityButton.addActionListener(editEntityButton);
+
+            DeleteEntityButton<Rent, RentManager> deleteEntityButton = new DeleteEntityButton<>("Delete", this);
+            deleteEntityButton.addActionListener(deleteEntityButton);
+
+
+
+
+
+            //Layout
+            //
+            Dimension defaultFieldDimension = new Dimension(200, 24);
+            selectedSkiID.setPreferredSize(defaultFieldDimension);
+            docIDLabel.setPreferredSize(defaultFieldDimension);
+            startDateLabel.setPreferredSize(defaultFieldDimension);
+            endDateLabel.setPreferredSize(defaultFieldDimension);
+            updatedEndDateLabel.setPreferredSize(defaultFieldDimension);
+            commentLabel.setPreferredSize(defaultFieldDimension);
+            clientComboBoxLabel.setPreferredSize(defaultFieldDimension);
+            skiComboBoxLabel.setPreferredSize(defaultFieldDimension);
+            rentStatusComboBoxLabel.setPreferredSize(defaultFieldDimension);
+
+
+            setLayout(new GridBagLayout());
+
+            GridBagConstraints gbc = new GridBagConstraints();
+
+            // todo: check if that mf works
+            AutoCompleteComboBox[] comboBoxes = {
+                    selectedItemClientComboBox,
+                    selectedItemSkiComboBox,
+                    selectedItemRentStatusComboBox
+            };
+            for (AutoCompleteComboBox comboBox: comboBoxes) {
+                comboBox.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        driver.refresh(); //XDDDDDDDDDDDDDDDDDDDDDDD
+                        // if it's stupid but it works
+                        // it IS stupid and it works :)
+                    }
+                });
+            }
+
+
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            int gap = 3;
+            gbc.insets = new Insets(gap, gap, gap, gap);
+            gbc = createGbc(0, 0);
+            gbc.weightx = 0.5;
+
+
+            // Top left
+            add(skiIDLabel, gbc);
+
+            gbc.gridx += 1; // One to the right
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedSkiID, gbc);
+            gbc.gridwidth = 1;
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(docIDLabel, gbc);
+
+            gbc.gridx += 1; // One to the right
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedDocID, gbc);
+            gbc.gridwidth = 1;
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(startDateLabel, gbc);
+
+            gbc.gridx += 1; // One to the right
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedStartDate, gbc);
+            gbc.gridwidth = 1;
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(endDateLabel, gbc);
+
+            gbc.gridx += 1; // One to the right
+
+            gbc.gridwidth = 2; // wider element
+            add(selectedEndDate, gbc);
+            gbc.gridwidth = 1;
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(updatedEndDateLabel, gbc);
+
+            gbc.gridx += 1; // One to the right
+            gbc.gridwidth = 2; // wider element
+            add(selectedUpdatedEndDate, gbc);
+            gbc.gridwidth = 1;
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+
+            add(commentLabel, gbc);
+
+            gbc.gridx += 1; // One to the right
+            gbc.gridwidth = 2; // wider element
+            add(selectedComment, gbc);
+            gbc.gridwidth = 1;
+
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+            gbc.gridwidth = 3; // wider element
+            add(clientComboBoxLabel, gbc);
+            gbc.gridwidth = 1;
+
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+            gbc.gridwidth = 3; // wider element
+            add(selectedItemClientComboBox, gbc);
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+            gbc.gridwidth = 3; // wider element
+            add(skiComboBoxLabel, gbc);
+
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+            gbc.gridwidth = 3; // wider element
+            add(selectedItemSkiComboBox, gbc);
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+            gbc.gridwidth = 3; // wider element
+            add(rentStatusComboBoxLabel, gbc);
+
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+            gbc.gridwidth = 3; // wider element
+            add(selectedItemRentStatusComboBox, gbc);
+            gbc.gridwidth = 1;
+
+
+            // Next Row -> Reset Position
+            gbc.gridy += 1;
+            gbc.gridx = 0;
+            add(createNewEntityButton, gbc);
+            gbc.gridx += 1;
+            add(editEntityButton, gbc);
+            gbc.gridx += 1;
+            add(deleteEntityButton, gbc);
+        }
+
+
+        @Override
+        public void onEntityLoaded(Rent selectedEntity) {
+
+            // 3 Combo boxes
+            String skiID = null;//skiTypes.get(selectedItemRentTypeComboBox.getSelectedIndex());
+            String clientID = null;//TODO
+            RentStatus status = RentStatus.ACTIVE;
+
+            // 3 Dates to set
+            Date startDate = null;
+            Date endDate = null;
+            Date updatedEndDate = null;
+
+
+            String comment = null;
+            //IDs ??
+
+            selectedItemBrand.setText(selectedEntity.getBrand());
+            selectedItemModel.setText(selectedEntity.getModel());
+            selectedItemBonds.setText(selectedEntity.getBonds());
+            selectedItemLength.setText(String.valueOf(selectedEntity.getLength()));
+
+            String typeName = selectedEntity.getType().getName();
+
+            // TODO: optimise this  | save this value and use it here String[] skiTypeNames = new String[skiTypes.size()];
+            int itemIndex = 0;
+            for (int i = 0; i < selectedItemRentTypeComboBox.getSize().getWidth(); i++){
+                if(selectedItemRentTypeComboBox.getItemAt(i).equals(typeName)){
+                    itemIndex = i;
+                    break;
+                }
+            }
+            selectedItemRentTypeComboBox.setSelectedIndex(itemIndex);
+        }
+
+        @Override
+        Rent loadItemData() {
+
+            JTextField selectedSkiID;
+            JTextField selectedDocID;
+            JTextField selectedStartDate;
+            JTextField selectedEndDate;
+            JTextField selectedUpdatedEndDate;
+            JTextField selectedComment;
+
+            // todo: make comboBox
+            // todo: add ski
+            // TODO make everything here xd
+            AutoCompleteComboBox searchRentStatus;
+            AutoCompleteComboBox selectedItemClientComboBox;
+            AutoCompleteComboBox selectedItemSkiComboBox;
+
+
+            String skiID = skis.get(selectedItemSkiComboBox.getSelectedIndex()).getModel();
+            String clientID = null;//TODO
+
+            Date startDate = null;
+            Date endDate = null;
+            Date updatedEndDate = null;
+            String comment = null;
+            RentStatus status = RentStatus.ACTIVE;
+
+            return new Rent(
+                    startDate, endDate, updatedEndDate, skiID, clientID, comment, status
+            );
+        }
+    }
+
+    //endRegion Rent
+
+
+
+
+
     //region Main Screen
 
     private static class TabButton extends Button implements ActionListener {
@@ -1267,4 +1761,33 @@ class SkiDriver {
 
         driver.refresh();
     }
+
+    //TODO STUB
+    public static String translateDateToString(Date date) {
+        return Util.dateToString(date);
+    }
+    //TODO STUB
+    public static Date translateStringToDate(String stringDate) {
+        Date date = null;
+        try {
+            date = Util.stringToDate(stringDate);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        return date;
+    }
+
+
+//      Todo: states for comboBox
+//    public static void skiTypesController(SkiTypeManager skiTypeManager){
+//        SkiType[] controlledSkiTypes = null;
+//
+//        public static void getSkiTypes() {
+//            controlledSkiTypes = skiTypeManager.getEntities();
+//            String[] skiTypeNames = new String[this.skiTypes.size()];
+//            for (int i = 0; i < skiTypes.size(); i++) {
+//                skiTypeNames[i] = skiTypes.get(i).getName();
+//            }
+//        }
+//    }
 }

@@ -1,6 +1,8 @@
 package wit.io.managers;
 
+import wit.io.exceptions.EntityAlreadyPresentException;
 import wit.io.exceptions.ReadingException;
+import wit.io.exceptions.SkiAppException;
 import wit.io.exceptions.WritingException;
 import wit.io.data.Client;
 import wit.io.utils.Util;
@@ -42,6 +44,5 @@ public class ClientManager extends Manager<Client> {
 
         return stream.collect(Collectors.toCollection(ArrayList::new));
 
-        // todo: test: stream w pierwszym ifie zwróci 0 elementów
     }
 }

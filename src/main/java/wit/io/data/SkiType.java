@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class SkiType implements Writeable {
-    private final String name;
+    private final String name; // PK
     private final String description;
 
     public SkiType(String name, String description) {
@@ -31,7 +31,7 @@ public class SkiType implements Writeable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return name.hashCode();
     }
 
     @Override
@@ -44,7 +44,7 @@ public class SkiType implements Writeable {
             return false;
         }
 
-        return ((SkiType) obj).name.equals(name);
+        return ((SkiType) obj).hashCode() == (this.hashCode());
     }
 
     public void writeData(DataOutputStream output) throws IOException {
@@ -69,7 +69,4 @@ public class SkiType implements Writeable {
 
 
 // TODO
-// equals
-// ?hashCode
-// toString
 // validation in constructor

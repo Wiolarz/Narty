@@ -29,10 +29,12 @@ public class RentManager extends Manager<Rent> {
         // (2) set FAILED
         for (Rent rent : dataEntities) {
             // istnieje ACTIVE, który ma endDat < now  który ma startDate >=now
-            if (rent.getStatus() == RentStatus.ACTIVE && rent.getStartDate().compareTo(now) <= 0) {
+            boolean shouldStartNow = rent.getStatus() == RentStatus.ACTIVE && rent.getStartDate().compareTo(now) <= 0;
+            if (shouldStartNow) {
                 for (Rent otherRent : dataEntities) {
-                    if (otherRent.getStatus() == RentStatus.OVERDUE && otherRent.getSkiID().equals(rent.getSkiID())) {
-                        editEntity(rent, rent.setStatus(RentStatus.FAILED));
+                    boolean otherIsOverdue = otherRent.getStatus() == RentStatus.OVERDUE && otherRent.getSkiID().equals(rent.getSkiID());
+                    if (otherIsOverdue) {
+                        super.editEntity(rent, rent.setStatus(RentStatus.FAILED));
                     }
                 }
             }
@@ -87,7 +89,7 @@ public class RentManager extends Manager<Rent> {
         if (Util.isAnyArgumentNull(oldRent, newRent)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
-        if (oldRent.getStartDate() != newRent.getStartDate() || oldRent.getEndDate() != newRent.getEndDate()) {
+        if (oldRent.getStartDate() != newRent.getStartDate() || oldRent.getEndDate() != newRent.getEndDate()  || oldRent.getUpdatedEndDate() != newRent.getUpdatedEndDate()) {
             validateRent(newRent);
         }
 

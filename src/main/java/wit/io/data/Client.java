@@ -6,15 +6,16 @@ import wit.io.utils.Writeable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 
 public class Client implements Writeable {
-    private final Integer docId;
+    private final String docId; // numer dowodu zawiera litery i cyfry, PK
+
     private final String firstName;
     private final String lastName;
     private final String description;
 
-
-    public Client(Integer docId, String firstName, String lastName, String description) {
+    public Client(String docId, String firstName, String lastName, String description) {
         if (Util.isAnyArgumentNull(firstName, lastName, docId)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
@@ -35,6 +36,11 @@ public class Client implements Writeable {
     }
 
     @Override
+    public int hashCode() {
+        return docId.hashCode();
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj == null) {
             return false;
@@ -44,18 +50,18 @@ public class Client implements Writeable {
             return false;
         }
 
-        return ((Client) obj).docId.equals(docId);
+        return ((Client) obj).hashCode() == (this.hashCode());
     }
 
     public void writeData(DataOutputStream output) throws IOException {
-        output.writeInt(getDocId());
+        output.writeUTF(getDocId());
         output.writeUTF(getFirstName());
         output.writeUTF(getLastName());
         output.writeUTF(getDescription());
     }
 
     public static Client readData(DataInputStream input) throws IOException {
-        Integer docId = input.readInt();
+        String docId = input.readUTF();
         String firstName = input.readUTF();
         String lastName = input.readUTF();
         String description = input.readUTF();
@@ -64,7 +70,7 @@ public class Client implements Writeable {
     }
 
 
-    public Integer getDocId() {
+    public String getDocId() {
         return docId;
     }
 
