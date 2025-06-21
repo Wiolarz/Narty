@@ -26,15 +26,6 @@ class SkiTypeManagerTest
         }
     });
 
-    private static void deleteDataSourceFile() {
-        File file = new File("src/test/java/wit/io/datasources/SkiType");
-        file.delete();
-    }
-
-    @AfterAll
-    public static void teardown() {
-        deleteDataSourceFile();
-    }
 
 
     @BeforeEach
@@ -317,7 +308,8 @@ class SkiTypeManagerTest
 
     @Test
     public void givenDatasourceFileIsMissing_whenInitializing_thenSkiTypeReadsNoData() throws ReadingException {
-        deleteDataSourceFile();
+        File file = new File("src/test/java/wit/io/datasources/Ski");
+        file.delete();
 
         manager = new SkiTypeManager("src/test/java/wit/io/datasources/SkiType");
 
@@ -326,12 +318,13 @@ class SkiTypeManagerTest
 
     @Test
     public void givenDatasourceFileIsMissing_whenWritingNewSkiType_thenFileIsCreated() throws SkiAppException {
-        deleteDataSourceFile();
+        File file = new File("src/test/java/wit/io/datasources/Ski");
+        file.delete();
         manager = new SkiTypeManager("src/test/java/wit/io/datasources/SkiType");
 
         manager.addEntity(new SkiType("name", "description"));
-        File file = new File("src/test/java/wit/io/datasources/SkiType");
 
+        file = new File("src/test/java/wit/io/datasources/SkiType");
         assertEquals(1, manager.getEntities().size());
         assertTrue(file.exists());
     }

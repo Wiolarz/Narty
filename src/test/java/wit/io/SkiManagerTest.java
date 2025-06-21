@@ -27,10 +27,6 @@ public class SkiManagerTest {
         }
     });
 
-    private static void deleteDataSourceFile() {
-        File file = new File("src/test/java/wit/io/datasources/Ski");
-        file.delete();
-    }
 
     @BeforeEach
     public void setUp() {
@@ -40,11 +36,6 @@ public class SkiManagerTest {
         } catch (WritingException | ReadingException e) {
             fail(e.getMessage());
         }
-    }
-
-    @AfterAll
-    public static void teardown() {
-        deleteDataSourceFile();
     }
 
     @Test
