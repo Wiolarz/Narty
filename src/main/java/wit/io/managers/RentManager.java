@@ -13,33 +13,50 @@ import java.util.stream.Stream;
 
 public class RentManager extends Manager<Rent> {
     public RentManager(String filePath) throws ReadingException, SkiAppException {
+        this(filePath, new Date());
+    }
+
+    public RentManager(String filePath, Date now) throws ReadingException, SkiAppException {
         super(filePath);
 
-        Date now = new Date();
-
-        // (1) set OVERDUE
-        for (Rent rent : dataEntities) {
-            // istnieje ACTIVE, który ma endDat < now i jesteśmy active
+        setOverdue(now);
+        setFailed(now);
+    }
+    
+    private void setOverdue(Date now) {
+        ArrayList<Rent> updatedRents = new ArrayList<>();
+        var it = dataEntities.iterator();
+        while(it.hasNext()) {
+            Rent rent = it.next();
             if (rent.getStatus() == RentStatus.ACTIVE && rent.getEndDate().before(now)) {
-                setRentOverdue(rent, now);
+                Rent updatedRent = rent.setStatus(RentStatus.OVERDUE).setUpdatedEndDate(now);
+                updatedRents.add(updatedRent);
+                it.remove();
             }
         }
+        // don't use this.addEntity, because it will always set status to ACTIVE
+        // and perform same validations again
+        dataEntities.addAll(updatedRents);
+    }
 
-
-        // (2) set FAILED
+    private void setFailed(Date now) {
+        ArrayList<Rent> removedRents = new ArrayList<>();
+        ArrayList<Rent> updatedRents = new ArrayList<>();
         for (Rent rent : dataEntities) {
-            // istnieje ACTIVE, który ma endDat < now  który ma startDate >=now
+            // istnieje ACTIVE, który się zaczął, ale istnieje dla niego jakiś OVERDUE
             boolean shouldStartNow = rent.getStatus() == RentStatus.ACTIVE && rent.getStartDate().compareTo(now) <= 0;
             if (shouldStartNow) {
                 for (Rent otherRent : dataEntities) {
-                    boolean otherIsOverdue = otherRent.getStatus() == RentStatus.OVERDUE && otherRent.getSkiID().equals(rent.getSkiID());
+                    boolean otherIsOverdue = otherRent.getStatus() == RentStatus.OVERDUE && otherRent.getSkiModel().equals(rent.getSkiModel());
                     if (otherIsOverdue) {
-                        super.editEntity(rent, rent.setStatus(RentStatus.FAILED));
+                        removedRents.add(rent);
+                        updatedRents.add(rent.setStatus(RentStatus.FAILED));
                     }
                 }
             }
-
         }
+        dataEntities.removeAll(removedRents);
+        dataEntities.addAll(updatedRents);
     }
 
     @Override
@@ -60,7 +77,7 @@ public class RentManager extends Manager<Rent> {
         for (Rent otherRent : getEntities()) {
             if (rentDatesOverlap(rent, otherRent)
                 && (otherRent.getStatus() == RentStatus.ACTIVE || otherRent.getStatus() == RentStatus.OVERDUE)
-                && otherRent.getSkiID().equals(rent.getSkiID())) {
+                && otherRent.getSkiModel().equals(rent.getSkiModel())) {
                 throw new OverlappingRentDateException("Cannot create a reservation. " +
                         "Chosen skis are already reserved for given startDate and endDate");
             }
@@ -99,25 +116,12 @@ public class RentManager extends Manager<Rent> {
         super.addEntity(newRent);
     }
 
-    public void setRentOverdue(Rent rent, Date now)
-            throws EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException, SkiAppException {
-        if (Util.isAnyArgumentNull(rent)) {
-            throw new IllegalArgumentException("One or more of given arguments were null.");
-        }
 
-        Rent updatedRent = rent.setStatus(RentStatus.OVERDUE).setUpdatedEndDate(now);
-        removeEntity(rent);
-        // don't use this.addEntity, because it will always set status to ACTIVE
-        // and perform same validations again
-        super.addEntity(updatedRent);
-    }
-
-
-    public ArrayList<Rent> search(Integer skiId, Integer docId, Date startDate, Date endDate, Date updatedEndDate, String comment, RentStatus status) {
+    public ArrayList<Rent> search(String SkiModel, String docId, Date startDate, Date endDate, Date updatedEndDate, String comment, RentStatus status) {
         Stream<Rent> stream = getEntities().stream();
 
-        if(skiId != null) {
-            stream = stream.filter(rent -> rent.getSkiID().equals(skiId));
+        if(SkiModel != null) {
+            stream = stream.filter(rent -> rent.getSkiModel().equals(SkiModel));
         }
 
         if(docId != null) {

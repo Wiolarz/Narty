@@ -23,7 +23,7 @@ public class ClientManager extends Manager<Client> {
         readFromFile(Client::readData);
     }
 
-    public ArrayList<Client> search(Integer docId, String firstName, String lastName, String description) {
+    public ArrayList<Client> search(String docId, String firstName, String lastName, String description) {
         Stream<Client> stream = getEntities().stream();
 
         if(docId != null) {

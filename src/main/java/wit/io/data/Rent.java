@@ -15,23 +15,23 @@ import java.util.UUID;
 public class Rent implements Writeable {
     private final UUID rentID; // PK
 
-    private final Integer skiID;
-    private final Integer docID;
+    private final String skiModel;
+    private final String docID;
     private final Date startDate;
     private final Date endDate;
     private final Date updatedEndDate;
     private final String comment;
     private final RentStatus status;
 
-    public Rent(Date startDate, Date endDate, Date updatedEndDate, Integer skiID, Integer clientID, String comment, RentStatus status) {
-        if (Util.isAnyArgumentNull(startDate, endDate, skiID, clientID)) {
+    public Rent(Date startDate, Date endDate, Date updatedEndDate, String skiModel, String clientID, String comment, RentStatus status) {
+        if (Util.isAnyArgumentNull(startDate, endDate, skiModel, clientID)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
         this.rentID = UUID.randomUUID();
         this.startDate = startDate;
         this.comment = (comment == null) ? "" : comment;
         this.endDate = endDate;
-        this.skiID = skiID;
+        this.skiModel = skiModel;
         this.docID = clientID;
         // status can be null, when initializing new Rent and will be set while adding new object
         // but status can be set when loading previously saved object
@@ -48,7 +48,7 @@ public class Rent implements Writeable {
     public String toString() {
         return "Rent{" +
                 "rentID=" + rentID +
-                "skiID=" + skiID +
+                "skiModel=" + skiModel +
                 ", clientID=" + docID +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
@@ -71,8 +71,8 @@ public class Rent implements Writeable {
     }
 
     public void writeData(DataOutputStream output) throws IOException {
-        output.writeUTF(String.valueOf(skiID));
-        output.writeUTF(String.valueOf(docID));
+        output.writeUTF(skiModel);
+        output.writeUTF(docID);
         output.writeUTF(Util.dateToString(startDate));
         output.writeUTF(Util.dateToString(endDate));
         output.writeUTF(Util.dateToString(updatedEndDate));
@@ -81,8 +81,8 @@ public class Rent implements Writeable {
     }
 
     public static Rent readData(DataInputStream input) throws IOException {
-        Integer skiID = input.readInt();
-        Integer clientID = input.readInt();
+        String skiModel = input.readUTF();
+        String docId = input.readUTF();
         Date startDate, endDate, updatedEndDate;
         try {
             startDate = Util.stringToDate(input.readUTF());
@@ -94,15 +94,15 @@ public class Rent implements Writeable {
         String comment = input.readUTF();
         RentStatus rentStatus = RentStatus.valueOf(input.readUTF());
 
-        return new Rent(startDate, endDate, updatedEndDate, skiID, clientID, comment, rentStatus);
+        return new Rent(startDate, endDate, updatedEndDate, skiModel, docId, comment, rentStatus);
     }
 
     public Rent setStatus(RentStatus newStatus) {
-        return new Rent(startDate, endDate, updatedEndDate, skiID, docID, comment, newStatus);
+        return new Rent(startDate, endDate, updatedEndDate, skiModel, docID, comment, newStatus);
     }
 
     public Rent setUpdatedEndDate(Date newUpdatedEndDate) {
-        return new Rent(startDate, endDate, newUpdatedEndDate, skiID, docID, comment, status);
+        return new Rent(startDate, endDate, newUpdatedEndDate, skiModel, docID, comment, status);
     }
 
     public UUID getRentID() {
@@ -125,11 +125,11 @@ public class Rent implements Writeable {
         return updatedEndDate;
     }
 
-    public Integer getSkiID() {
-        return skiID;
+    public String getSkiModel() {
+        return skiModel;
     }
 
-    public Integer getClientID() {
+    public String getClientID() {
         return docID;
     }
 
