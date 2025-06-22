@@ -78,6 +78,11 @@ class SkiDriver {
 
         SkiType skiType1 = new SkiType("hello", "world");
         SkiType skiType2 = new SkiType("kill", "mee");
+
+        for (int i = 0; i < 200; i++) {
+            skiTypeManager.addEntity(new SkiType("elo" + i, "xd"));
+        }
+
         skiTypeManager.addEntity(skiType1);
         skiTypeManager.addEntity(skiType2);
 
@@ -331,6 +336,8 @@ class SkiDriver {
         //TODO implement safer constructor
         GenericAppTab<E, M> parent;
         JPanel searchResultsPanel;
+        JScrollPane scrollableSearchResultsPanel;
+        JPanel showSearchPanel;
 
         protected abstract ArrayList<E> performSearch(); // TODO make it even more secure, by forcing overriding of arguments collection
 
@@ -468,7 +475,12 @@ class SkiDriver {
             searchButton.addActionListener(this);
 
             this.searchResultsPanel = new JPanel();
+            this.showSearchPanel = new JPanel(new GridBagLayout());
 
+            this.scrollableSearchResultsPanel= new JScrollPane(showSearchPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            this.showSearchPanel.setPreferredSize(new Dimension(200, 100));
+            //this.scrollableSearchResultsPanel.setBackground( new Color( 153, 153, 102 ) );
+            //this.scrollableSearchResultsPanel.setBounds( 100, 110, 743, 156 );
 
             setLayout(new GridBagLayout());
 
@@ -477,8 +489,7 @@ class SkiDriver {
             add(this.searchNameTextField, createGbc(1, 0));
             add(this.searchDescriptionTextField,  createGbc(1, 1));
             add(searchButton, createGbc(0, 2, 2));
-            add(searchResultsPanel, createGbc(0, 3));
-
+            add(scrollableSearchResultsPanel, createGbc(0, 3, 2));
 
             // Show all items
             ArrayList<SkiType> results = this.manager.search(null, null);
@@ -492,7 +503,7 @@ class SkiDriver {
 
 
         public void loadSearchResults(ArrayList<SkiType> searchResults) {
-            searchResultsPanel.removeAll();
+            showSearchPanel.removeAll();
             if (!searchResults.isEmpty()) {
                 if (parent.isThereNoSelectedItem()) {
                     parent.selectedItem(searchResults.get(0));
@@ -504,19 +515,32 @@ class SkiDriver {
             if (number_of_results == 0) {
                 number_of_results = 1;  // Grid layout cannot be set to 0
                 JLabel noResultsLabel = new JLabel("No results");
-                searchResultsPanel.add(noResultsLabel);
+                showSearchPanel.add(noResultsLabel);
 
             }
-
-            searchResultsPanel.setLayout(new GridLayout(number_of_results, 1));
+            if (number_of_results > 10) {
+                number_of_results = 10;
+            }
+            //showSearchPanel.setLayout(new GridLayout(number_of_results, 1));
+            int i = 0;
+            //showSearchPanel.setLayout();
             for (SkiType skiItem : searchResults) {
                 System.out.println(skiItem.toString());
                 SearchedPositionButton<SkiType> skiTypeResult = new SearchedPositionButton<>(skiItem.getName(), skiItem, parent);
 
                 skiTypeResult.addActionListener(skiTypeResult);
+                this.showSearchPanel.setBounds(300, 300, 300, i * 1000);
 
-                searchResultsPanel.add(skiTypeResult);
+                showSearchPanel.add(skiTypeResult, createGbc(0, i));// ,
+
+
+                i += 1;
+
             }
+            showSearchPanel.setMinimumSize(new Dimension(200, searchResults.size() * 10));
+            System.out.println("heigh  " +  showSearchPanel.getHeight());
+
+            scrollableSearchResultsPanel.revalidate();
             driver.refresh();
             System.out.println("End of Search");
         }
@@ -1819,7 +1843,7 @@ class SkiDriver {
         }
     }
 
-    //endRegion Rent
+    //endregion Rent
 
 
 
@@ -1874,7 +1898,7 @@ class SkiDriver {
 
         // Main Space
         tabSpace = new JPanel();
-        tabSpace.add(skiAppTab); // TODO remember last selected tab by user
+        tabSpace.add(skiTypeAppTab); // TODO remember last selected tab by user
 
 
         mainFrame.setLayout(new GridBagLayout());
