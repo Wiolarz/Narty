@@ -1,4 +1,4 @@
-package wit.io;
+package wit.io.managers;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import wit.io.data.Rent;
 import wit.io.data.enums.RentStatus;
 import wit.io.exceptions.*;
-import wit.io.managers.RentManager;
 import wit.io.utils.Util;
 
 import java.time.LocalDate;
@@ -36,7 +35,7 @@ public class RentManagerTest {
     }
 
     @AfterEach
-    public void tearDown() throws ReadingException, WritingException {
+    public void tearDown() throws WritingException {
         manager.resetEntityData();
     }
 
@@ -109,7 +108,7 @@ public class RentManagerTest {
     }
 
     @Test
-    public void givenNewRentWithEndDateBeforeStartDate_whenAddingRent_thenThrowInvalidRentDateException() throws SkiAppException {
+    public void givenNewRentWithEndDateBeforeStartDate_whenAddingRent_thenThrowInvalidRentDateException() {
         Rent test1 = new Rent(null, getDateForDay(25), getDateForDay(22), null, "model1", "client1", "", null);
         assertThrows(InvalidRentDateException.class, () -> manager.addEntity(test1));
     }
@@ -211,7 +210,7 @@ public class RentManagerTest {
     }
 
     @Test
-    public void givenExistingRents_whenSearchingByClientID_thenReturnsMatchingRents() throws SkiAppException {
+    public void givenExistingRents_whenSearchingByClientID_thenReturnsMatchingRents() {
         Set<Rent> setOfRentals = new HashSet<>(List.of(
                 new Rent(null, getDateForDay(22), getDateForDay(23), null, "model1", "client1", "", RentStatus.ACTIVE),
                 new Rent(null, getDateForDay(24), getDateForDay(25), null, "model2", "client2", "", RentStatus.ACTIVE)
@@ -224,7 +223,7 @@ public class RentManagerTest {
     }
 
     @Test
-    public void givenExistingRent_whenSearchingWithNoMatchingCriteria_thenReturnsEmptyList() throws SkiAppException {
+    public void givenExistingRent_whenSearchingWithNoMatchingCriteria_thenReturnsEmptyList() {
         Set<Rent> setOfRentals = new HashSet<>(List.of(
                 new Rent(null, getDateForDay(22), getDateForDay(23), null, "model1", "client1", "", RentStatus.ACTIVE)
         ));

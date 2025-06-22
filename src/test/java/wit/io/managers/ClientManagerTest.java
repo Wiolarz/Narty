@@ -1,4 +1,4 @@
-package wit.io;
+package wit.io.managers;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,9 +8,7 @@ import wit.io.exceptions.EntityAlreadyPresentException;
 import wit.io.exceptions.EntityNotPresentException;
 import wit.io.exceptions.ReadingException;
 import wit.io.exceptions.WritingException;
-import wit.io.managers.ClientManager;
 import wit.io.utils.Util;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;

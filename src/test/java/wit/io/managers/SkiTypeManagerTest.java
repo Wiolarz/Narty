@@ -1,11 +1,10 @@
-package wit.io;
+package wit.io.managers;
 
 import org.junit.jupiter.api.AfterEach;
 import wit.io.exceptions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import wit.io.data.SkiType;
-import wit.io.managers.SkiTypeManager;
 import wit.io.utils.Util;
 import java.io.File;
 import java.util.ArrayList;

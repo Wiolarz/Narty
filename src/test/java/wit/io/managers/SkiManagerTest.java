@@ -1,4 +1,4 @@
-package wit.io;
+package wit.io.managers;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import wit.io.data.Ski;
 import wit.io.data.SkiType;
 import wit.io.exceptions.*;
-import wit.io.managers.SkiManager;
 import wit.io.utils.Util;
 import java.util.ArrayList;
 import java.util.List;
@@ -152,7 +151,7 @@ public class SkiManagerTest {
 
 
     @Test
-    public void givenNoFilters_whenSearching_thenReturnsAllSkis() throws SkiAppException {
+    public void givenNoFilters_whenSearching_thenReturnsAllSkis() {
         SkiType type1 = new SkiType("type1", "desc1");
         List<Ski> listOfSkis = new ArrayList<>(List.of(
                 new Ski(type1, "brand1", "model1", "bonds1", 150f),
@@ -166,7 +165,7 @@ public class SkiManagerTest {
     }
 
     @Test
-    public void givenType_whenSearching_thenReturnsMatchingSkis() throws SkiAppException {
+    public void givenType_whenSearching_thenReturnsMatchingSkis(){
         SkiType type1 = new SkiType("type1", "desc1");
         SkiType type2 = new SkiType("type2", "desc2");
 
@@ -182,7 +181,7 @@ public class SkiManagerTest {
     }
 
     @Test
-    public void givenBrand_whenSearching_thenReturnsMatchingSkis() throws SkiAppException {
+    public void givenBrand_whenSearching_thenReturnsMatchingSkis()  {
         SkiType type1 = new SkiType("type1", "desc1");
         List<Ski> listOfSkis = new ArrayList<>(List.of(
                 new Ski(type1, "brand-test-1", "model1", "bonds1", 150f),

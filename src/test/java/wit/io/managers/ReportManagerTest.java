@@ -1,4 +1,4 @@
-package wit.io;
+package wit.io.managers;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,9 +9,6 @@ import wit.io.data.SkiType;
 import wit.io.data.enums.RentStatus;
 import wit.io.exceptions.SkiAppException;
 import wit.io.exceptions.WritingException;
-import wit.io.managers.RentManager;
-import wit.io.managers.ReportManager;
-import wit.io.managers.SkiManager;
 import wit.io.utils.Util;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -97,7 +94,7 @@ public class ReportManagerTest {
     }
 
     @Test
-    public void givenScheduledRentAndOneCurrentlyOngoing_whenAvailableSkisCalled_thenReturnCurrentlyAvailableOnes() throws SkiAppException {
+    public void givenScheduledRentAndOneCurrentlyOngoing_whenAvailableSkisCalled_thenReturnCurrentlyAvailableOnes() {
         List<Ski> listOfSkis = new ArrayList<>(List.of(
                 new Ski(new SkiType("name1", "description1"), "brand1", "model1", "bond1", 1f),
                 new Ski(new SkiType("name2", "description2"), "brand2", "model2", "bond2", 2f),
