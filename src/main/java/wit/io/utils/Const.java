@@ -1,5 +1,9 @@
 package wit.io.utils;
 
+
+/**
+ * Enum class used to store all constants used by Narty application
+ */
 public enum Const {
     ;
     public static final String DateFormat = "dd-MM-yyyy";

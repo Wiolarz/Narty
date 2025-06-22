@@ -1,5 +1,8 @@
 package wit.io.data.enums;
 
+/**
+ * Enum class representing all states a rental (Rent) can be in
+ */
 public enum RentStatus {
     /**
      * represents the rented state: not returned yet or customer has reserved the skis in advance
@@ -18,5 +21,5 @@ public enum RentStatus {
     /**
      * represents the state when Skis were not returned on scheduled time
      */
-    OVERDUE;
+    OVERDUE
 }
