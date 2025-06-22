@@ -5,31 +5,30 @@ import wit.io.exceptions.*;
 import wit.io.data.Rent;
 import wit.io.utils.Util;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RentManager extends Manager<Rent> {
     public RentManager(String filePath) throws ReadingException, SkiAppException {
-        this(filePath, new Date());
+        this(filePath, LocalDate.now());
     }
 
-    public RentManager(String filePath, Date now) throws ReadingException, SkiAppException {
+    public RentManager(String filePath, LocalDate now) throws ReadingException, SkiAppException {
         super(filePath);
 
         setOverdue(now);
         setFailed(now);
     }
     
-    private void setOverdue(Date now) {
+    private void setOverdue(LocalDate now) {
         LinkedHashSet<Rent> updatedRents = new LinkedHashSet<>();
         var it = dataEntities.iterator();
         while(it.hasNext()) {
             Rent rent = it.next();
-            if (rent.getStatus() == RentStatus.ACTIVE && rent.getEndDate().before(now)) {
+            if (rent.getStatus() == RentStatus.ACTIVE && rent.getEndDate().isBefore(now)) {
                 Rent updatedRent = rent.setStatus(RentStatus.OVERDUE).setUpdatedEndDate(now);
                 updatedRents.add(updatedRent);
                 it.remove();
@@ -40,7 +39,7 @@ public class RentManager extends Manager<Rent> {
         dataEntities.addAll(updatedRents);
     }
 
-    private void setFailed(Date now) {
+    private void setFailed(LocalDate now) {
         LinkedHashSet<Rent> removedRents = new LinkedHashSet<>();
         LinkedHashSet<Rent> updatedRents = new LinkedHashSet<>();
         for (Rent rent : dataEntities) {
@@ -67,7 +66,7 @@ public class RentManager extends Manager<Rent> {
 
 
     static boolean rentDatesOverlap(Rent rent, Rent otherRent) {
-        return !(rent.getUpdatedEndDate().before(otherRent.getStartDate()) || rent.getStartDate().after(otherRent.getUpdatedEndDate()));
+        return !(rent.getUpdatedEndDate().isBefore(otherRent.getStartDate()) || rent.getStartDate().isAfter(otherRent.getUpdatedEndDate()));
     }
 
     void validateRent(Rent rent) throws InvalidRentDateException, OverlappingRentDateException {
@@ -119,7 +118,7 @@ public class RentManager extends Manager<Rent> {
     }
 
 
-    public ArrayList<Rent> search(String SkiModel, String docId, Date startDate, Date endDate, Date updatedEndDate, String comment, RentStatus status) {
+    public ArrayList<Rent> search(String SkiModel, String docId, LocalDate startDate, LocalDate endDate, LocalDate updatedEndDate, String comment, RentStatus status) {
         Stream<Rent> stream = getEntities().stream();
 
         if(SkiModel != null) {
@@ -131,15 +130,15 @@ public class RentManager extends Manager<Rent> {
         }
 
         if(startDate != null) {
-            stream = stream.filter(rent -> !rent.getStartDate().before(startDate));
+            stream = stream.filter(rent -> !rent.getStartDate().isBefore(startDate));
         }
 
         if(endDate != null) {
-            stream = stream.filter(rent -> !rent.getStartDate().after(endDate));
+            stream = stream.filter(rent -> !rent.getStartDate().isAfter(endDate));
         }
 
         if(updatedEndDate != null) {
-            stream = stream.filter(rent -> !rent.getStartDate().after(updatedEndDate));
+            stream = stream.filter(rent -> !rent.getStartDate().isAfter(updatedEndDate));
         }
 
         if(comment != null) {

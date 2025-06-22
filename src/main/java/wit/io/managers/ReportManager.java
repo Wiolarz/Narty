@@ -5,11 +5,9 @@ import wit.io.data.SkiType;
 import wit.io.data.Rent;
 import wit.io.data.enums.RentStatus;
 
-import java.lang.reflect.Array;
+import java.time.LocalDate;
 import java.util.Date;
-
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
@@ -40,13 +38,13 @@ public class ReportManager {
 
     }
 
-    public LinkedHashSet<Ski> rentedSkis(Date startDate) {
+    public LinkedHashSet<Ski> rentedSkis(LocalDate startDate) {
         // startDate now or before now
-        Date startDateFilter = (startDate == null) ? new Date() : startDate;
+        LocalDate startDateFilter = (startDate == null) ? LocalDate.now() : startDate;
         var skiModels = rentManager.getEntities()
                 .stream()
                 .filter(e -> e.getStatus() == RentStatus.ACTIVE || e.getStatus() == RentStatus.OVERDUE)
-                .filter(e -> !e.getStartDate().after(startDateFilter))
+                .filter(e -> !e.getStartDate().isAfter(startDateFilter))
                 .map(Rent::getSkiModel)
                 .map(e -> new Ski(new SkiType("", ""), "", e, "", 0.0f))
                 .collect(Collectors.toCollection(LinkedHashSet::new));

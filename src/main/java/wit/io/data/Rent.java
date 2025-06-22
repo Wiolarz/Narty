@@ -8,8 +8,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.Date;
-import java.util.Objects;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public class Rent implements Writeable {
@@ -17,13 +16,13 @@ public class Rent implements Writeable {
 
     private final String skiModel;
     private final String docID;
-    private final Date startDate;
-    private final Date endDate;
-    private final Date updatedEndDate;
+    private final LocalDate startDate;
+    private final LocalDate endDate;
+    private final LocalDate updatedEndDate;
     private final String comment;
     private final RentStatus status;
 
-    public Rent(UUID uuid, Date startDate, Date endDate, Date updatedEndDate, String skiModel, String clientID, String comment, RentStatus status) {
+    public Rent(UUID uuid, LocalDate startDate, LocalDate endDate, LocalDate updatedEndDate, String skiModel, String clientID, String comment, RentStatus status) {
         if (Util.isAnyArgumentNull(startDate, endDate, skiModel, clientID)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
@@ -85,7 +84,7 @@ public class Rent implements Writeable {
         UUID rentID = UUID.fromString(input.readUTF());
         String skiModel = input.readUTF();
         String docId = input.readUTF();
-        Date startDate, endDate, updatedEndDate;
+        LocalDate startDate, endDate, updatedEndDate;
         try {
             startDate = Util.stringToDate(input.readUTF());
             endDate = Util.stringToDate(input.readUTF());
@@ -103,7 +102,7 @@ public class Rent implements Writeable {
         return new Rent(rentID, startDate, endDate, updatedEndDate, skiModel, docID, comment, newStatus);
     }
 
-    public Rent setUpdatedEndDate(Date newUpdatedEndDate) {
+    public Rent setUpdatedEndDate(LocalDate newUpdatedEndDate) {
         return new Rent(rentID, startDate, endDate, newUpdatedEndDate, skiModel, docID, comment, status);
     }
 
@@ -115,15 +114,15 @@ public class Rent implements Writeable {
         return status;
     }
 
-    public Date getStartDate() {
+    public LocalDate getStartDate() {
         return startDate;
     }
 
-    public Date getEndDate() {
+    public LocalDate getEndDate() {
         return endDate;
     }
 
-    public Date getUpdatedEndDate() {
+    public LocalDate getUpdatedEndDate() {
         return updatedEndDate;
     }
 

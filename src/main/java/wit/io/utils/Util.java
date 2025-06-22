@@ -1,11 +1,9 @@
 package wit.io.utils;
 
-import java.io.IOException;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 public class Util {
     public static boolean isAnyArgumentNull(Object... objects) {
@@ -15,14 +13,14 @@ public class Util {
         return false;
     }
 
-    public static String dateToString(Date date) {
-        DateFormat formatter = new SimpleDateFormat(Const.DateFormat);
+    public static String dateToString(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Const.DateFormat);
         return formatter.format(date);
     }
 
-    public static Date stringToDate(String string) throws ParseException {
-        DateFormat formatter = new SimpleDateFormat(Const.DateFormat);
-        return formatter.parse(string);
+    public static LocalDate stringToDate(String string) throws ParseException {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        return LocalDate.parse(string, formatter);
     }
 
     // checks whether the first string contains the second string.
@@ -37,33 +35,32 @@ public class Util {
         return string1.toLowerCase().startsWith(string2.toLowerCase());
     }
 
-    public static boolean isDateRangeValid(Date startDate, Date endDate) {
-        // validate date if
-        // startDate >= now(),
-        // endDate <= 5 years ahead
-        // end-start to max 0.5 years
-        // startDate <= endDate
 
-        if(startDate == null || endDate == null) {
+    public static boolean isDateRangeValid(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
             return false;
         }
 
-        Date now = new Date();
+        LocalDate now = LocalDate.now();
+        if (startDate.isBefore(now)) {
+            return false;
+        }
 
-        Calendar calendar = Calendar.getInstance();
+        LocalDate fiveYearsFromNow = now.plusYears(5);
+        if (endDate.isAfter(fiveYearsFromNow)) {
+            return false;
+        }
 
-        calendar.setTime(now);
-        calendar.add(Calendar.YEAR, 5);
-        Date fiveYearLimit = calendar.getTime();
+        long durationInMonths = ChronoUnit.MONTHS.between(startDate, endDate);
+        if (durationInMonths > 6) {
+            return false;
+        }
 
-        calendar.setTime(startDate);
-        calendar.add(Calendar.MONTH, 6);
-        Date sixMonthDurationLimit = calendar.getTime();
+        if (startDate.isAfter(endDate)) {
+            return false;
+        }
 
-        return !startDate.before(now) ||
-                !startDate.after(endDate) ||
-                !endDate.after(fiveYearLimit) ||
-                !endDate.after(sixMonthDurationLimit);
+        return true;
     }
 
 }
