@@ -51,6 +51,7 @@ public class Rent implements Writeable {
                 ", clientID=" + docID +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
+                ", updatedEndDate=" + updatedEndDate +
                 ", comment='" + comment + '\'' +
                 ", status=" + status +
                 '}';

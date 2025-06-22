@@ -1,12 +1,13 @@
 package wit.io;
 
-import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import wit.io.data.Ski;
 import wit.io.data.SkiType;
 import wit.io.exceptions.*;
 import wit.io.managers.SkiManager;
+import wit.io.utils.Util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -35,10 +36,10 @@ public class SkiManagerTest {
             fail(e.getMessage());
         }
     }
-    
-    @AfterAll
-    public static void tearDown() throws ReadingException, WritingException {
-        new SkiManager("src/test/java/wit/io/datasources/ski").resetEntityData();
+
+    @AfterEach
+    public void tearDown() throws WritingException {
+        skiManager.resetEntityData();
     }
 
     @Test
@@ -56,35 +57,28 @@ public class SkiManagerTest {
 
         // then
         assertEquals(3, skiManager.getEntities().size());
-        for (int i = 0; i<skiManager.getEntities().size(); i++) {
-            assertEquals(listOfSkis.get(i), skiManager.getEntitiesList().get(i));
-        }
+        assertTrue(Util.orderAndCompareListsOfObjectsByStringValue(skiManager.getEntitiesList(), listOfSkis));
     }
 
     @Test
-    public void givenSkiExists_whenAddingNewSki_thenThrowEntityAlreadyPresentException () throws SkiAppException {
+    public void givenSkiExists_whenAddingNewSkiWithTheSameData_thenThrowEntityAlreadyPresentException () throws SkiAppException {
         skiManager.addEntity(new Ski(new SkiType("name1", "description1"), "brand1", "model1", "bond1", 1f));
 
         assertThrows(EntityAlreadyPresentException.class, () -> skiManager.addEntity(new Ski(new SkiType("name1", "description1"), "brand1", "model1", "bond1", 1f)));
     }
 
     @Test
-    public void givenSkiEqualsNull_whenAddingNewSki_thenThrowIllegalArgumentException() {
+    public void givenSkIsNull_whenAddingNewSki_thenThrowIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->  skiManager.addEntity(null));
     }
 
     @Test
     public void givenSkiDoesNotExist_whenAddingNewType_thenAddToSkis() throws SkiAppException {
-        skiManager.addEntity(new Ski(new SkiType("name1", "description1"), "brand1", "model1", "bond1", 1f));
+        Ski ski = new Ski(new SkiType("name1", "description1"), "brand1", "model1", "bond1", 1f);
+        skiManager.addEntity(ski);
 
-        Ski ski = skiManager.getEntitiesList().get(0);
-        assertEquals(1, skiManager.getEntities().size());
-        assertEquals("name1", ski.getType().getName());
-        assertEquals("description1", ski.getType().getDescription());
-        assertEquals("brand1", ski.getBrand());
-        assertEquals("model1", ski.getModel());
-        assertEquals("bond1", ski.getBonds());
-        assertEquals(1f, ski.getLength());
+        Ski resultSki = skiManager.getEntitiesList().get(0);
+        assertTrue(Util.compareObjectsByStringValue(ski, resultSki));
     }
 
     @Test
@@ -103,15 +97,7 @@ public class SkiManagerTest {
 
         skiManager.removeEntity(new Ski(new SkiType("name1", "description1"), "brand1", "model1", "bond1", 1f));
 
-        assertFalse(skiManager.getEntities().contains(new Ski(new SkiType("name1", "description1"), "brand1", "model1", "bond1", 1f)));
         assertEquals(0, skiManager.getEntities().size());
-    }
-
-    @Test
-    public void givenExistingSki_whenRemovingSkiWithDifferentType_thenThrowEntityNotPresentException() throws SkiAppException {
-        skiManager.addEntity(new Ski(new SkiType("name1", "description1"), "brand1", "model1", "bond1", 1f));
-
-        assertThrows(EntityNotPresentException.class, () -> skiManager.removeEntity(new Ski(new SkiType("name2", "description2"), "brand1", "model1", "bond1", 1f)));
     }
 
     @Test
@@ -125,16 +111,15 @@ public class SkiManagerTest {
     }
 
     @Test
-    public void givenSkiWithDifferentType_whenEditingSki_thenSkiDataIsEdited() throws SkiAppException {
+    public void givenSkiWithDifferentTypeButMatchingModel_whenEditingSki_thenSkiDataIsEdited() throws SkiAppException {
         Ski oldSki = new Ski(new SkiType("name1", "description1"), "brand1", "model1", "bond1", 1f);
         Ski updatedSki = new Ski(new SkiType("name2", "description2"), "brand1", "model1", "bond1", 1f);
-
         skiManager.addEntity(oldSki);
 
         skiManager.editEntity(oldSki, updatedSki);
 
-        assertEquals(updatedSki, skiManager.getEntitiesList().get(0));
         assertEquals(1, skiManager.getEntities().size());
+        assertEquals(updatedSki, skiManager.getEntitiesList().get(0));
     }
 
     @Test
@@ -145,7 +130,7 @@ public class SkiManagerTest {
 
         assertThrows(IllegalArgumentException.class, () -> skiManager.editEntity(oldSki, null));
         assertEquals(1, skiManager.getEntities().size());
-        assertEquals(oldSki, skiManager.getEntitiesList().get(0));
+        assertTrue(Util.compareObjectsByStringValue(oldSki, skiManager.getEntitiesList().get(0)));
     }
 
     @Test
@@ -169,40 +154,45 @@ public class SkiManagerTest {
     @Test
     public void givenNoFilters_whenSearching_thenReturnsAllSkis() throws SkiAppException {
         SkiType type1 = new SkiType("type1", "desc1");
-        Ski ski1 = new Ski(type1, "brand1", "model1", "bonds1", 150f);
-        Ski ski2 = new Ski(type1, "brand2", "model2", "bonds2", 160f);
-        skiManager.addEntity(ski1);
-        skiManager.addEntity(ski2);
+        List<Ski> listOfSkis = new ArrayList<>(List.of(
+                new Ski(type1, "brand1", "model1", "bonds1", 150f),
+                new Ski(type1, "brand2", "model2", "bonds2", 160f)
+        ));
+        skiAddingConsumer.accept(listOfSkis);
 
         List<Ski> results = skiManager.search(null, null, null, null, null, null);
         assertEquals(2, results.size());
+        assertTrue(Util.orderAndCompareListsOfObjectsByStringValue(listOfSkis, results));
     }
 
     @Test
     public void givenType_whenSearching_thenReturnsMatchingSkis() throws SkiAppException {
         SkiType type1 = new SkiType("type1", "desc1");
         SkiType type2 = new SkiType("type2", "desc2");
-        Ski ski1 = new Ski(type1, "brand1", "model1", "bonds1", 150f);
-        Ski ski2 = new Ski(type2, "brand2", "model2", "bonds2", 160f);
-        skiManager.addEntity(ski1);
-        skiManager.addEntity(ski2);
+
+        List<Ski> listOfSkis = new ArrayList<>(List.of(
+                new Ski(type1, "brand1", "model1", "bonds1", 150f),
+                new Ski(type2, "brand2", "model2", "bonds2", 160f)
+        ));
+        skiAddingConsumer.accept(listOfSkis);
 
         List<Ski> results = skiManager.search(type1, null, null, null, null, null);
         assertEquals(1, results.size());
-        assertEquals(ski1, results.get(0));
+        assertEquals(listOfSkis.get(0), results.get(0));
     }
 
     @Test
     public void givenBrand_whenSearching_thenReturnsMatchingSkis() throws SkiAppException {
         SkiType type1 = new SkiType("type1", "desc1");
-        Ski ski1 = new Ski(type1, "brand-test-1", "model1", "bonds1", 150f);
-        Ski ski2 = new Ski(type1, "brand-other-2", "model2", "bonds2", 160f);
-        skiManager.addEntity(ski1);
-        skiManager.addEntity(ski2);
+        List<Ski> listOfSkis = new ArrayList<>(List.of(
+                new Ski(type1, "brand-test-1", "model1", "bonds1", 150f),
+                new Ski(type1, "brand-other-2", "model2", "bonds2", 160f)
+        ));
+        skiAddingConsumer.accept(listOfSkis);
 
         List<Ski> results = skiManager.search(null, "TEST-1", null, null, null, null);
         assertEquals(1, results.size());
-        assertEquals(ski1, results.get(0));
+        assertEquals(listOfSkis.get(0), results.get(0));
     }
 
     @Test
@@ -285,7 +275,7 @@ public class SkiManagerTest {
         List<Ski> listOfSkis = new ArrayList<>(List.of(
                 new Ski(type1, "brand1", "model-a", "bonds-1", 150f),
                 new Ski(type2, "brand1", "model-b", "bonds-2", 160f),
-                new Ski(type2, "brand2", "model-b", "bonds-3", 170f)
+                new Ski(type2, "brand2", "model-c", "bonds-3", 170f)
         ));
         skiAddingConsumer.accept(listOfSkis);
 

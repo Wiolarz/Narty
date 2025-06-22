@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RentManager extends Manager<Rent> {
+    private final LocalDate now;
+
     public RentManager(String filePath) throws ReadingException, SkiAppException {
         this(filePath, LocalDate.now());
     }
@@ -19,6 +21,7 @@ public class RentManager extends Manager<Rent> {
     public RentManager(String filePath, LocalDate now) throws ReadingException, SkiAppException {
         super(filePath);
 
+        this.now = now;
         setOverdue(now);
         setFailed(now);
     }
@@ -70,7 +73,7 @@ public class RentManager extends Manager<Rent> {
     }
 
     void validateRent(Rent rent) throws InvalidRentDateException, OverlappingRentDateException {
-        if(!Util.isDateRangeValid(rent.getStartDate(), rent.getEndDate())) {
+        if(!Util.isDateRangeValid(rent.getStartDate(), rent.getEndDate(), now)) {
             throw new InvalidRentDateException();
         }
 
@@ -107,7 +110,7 @@ public class RentManager extends Manager<Rent> {
         if (Util.isAnyArgumentNull(oldRent, newRent)) {
             throw new IllegalArgumentException("One or more of given arguments were null.");
         }
-        if (oldRent.getStartDate() != newRent.getStartDate() || oldRent.getEndDate() != newRent.getEndDate() || oldRent.getUpdatedEndDate() != newRent.getUpdatedEndDate()) {
+        if (!oldRent.getStartDate().isEqual(newRent.getStartDate()) || !oldRent.getEndDate().isEqual(newRent.getEndDate()) || !oldRent.getUpdatedEndDate().isEqual(newRent.getUpdatedEndDate())) {
             validateRent(newRent);
         }
 

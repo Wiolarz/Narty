@@ -8,9 +8,7 @@ import wit.io.managers.SkiManager;
 import wit.io.utils.Const;
 import wit.io.managers.SkiTypeManager;
 import wit.io.data.SkiType;
-
-import java.util.Date;
-
+import java.time.LocalDate;
 
 public class Main {
     static SkiTypeManager skiTypeManager;
@@ -58,7 +56,8 @@ public class Main {
 
 
     public static void main(String[] args) throws EntityAlreadyPresentException, ReadingException, WritingException, EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException, SkiAppException {
-        RentManager rentManager = new RentManager("src/main/java/wit/io/datasources/rent");
-        //rentManager.addEntity(new Rent(new Date(2025, 06, 10), new Date(2025, 06, 15), 10, 10, "", RentStatus.ACTIVE));
+         RentManager rentManager = new RentManager("src/main/java/wit/io/datasources/rent");
+         rentManager.resetEntityData();
+        rentManager.addEntity(new Rent(null, LocalDate.of(2025, 6, 22), LocalDate.of(2025, 6, 23), null, "10", "10", "", RentStatus.ACTIVE));
     }
 }

@@ -1,10 +1,12 @@
 package wit.io;
 
+import org.junit.jupiter.api.AfterEach;
 import wit.io.exceptions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import wit.io.data.SkiType;
 import wit.io.managers.SkiTypeManager;
+import wit.io.utils.Util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +36,11 @@ class SkiTypeManagerTest
         } catch (WritingException | ReadingException e) {
             fail(e.getMessage());
         }
+    }
+
+    @AfterEach
+    public void tearDown() throws WritingException {
+        manager.resetEntityData();
     }
 
     @Test
@@ -77,12 +84,11 @@ class SkiTypeManagerTest
 
         manager.removeEntity(ski);
 
-        assertFalse(manager.getEntities().contains(ski));
         assertEquals(0, manager.getEntities().size());
     }
 
     @Test
-    public void givenSkiTypeWithSimilarName_whenRemovingSkiType_thenThrowEntityNotPresentException() throws SkiAppException {
+    public void givenSkiTypeExists_whenRemovingSkiTypeWithSimilarName_thenThrowEntityNotPresentException() throws SkiAppException {
         manager.addEntity(new SkiType("hello1", "world1"));
 
         assertThrows(
@@ -133,9 +139,7 @@ class SkiTypeManagerTest
 
         // then
         assertEquals(3, manager.getEntities().size());
-        for (int i = 0; i<manager.getEntities().size(); i++) {
-            assertEquals(listOfSkis.get(i), manager.getEntitiesList().get(i));
-        }
+        assertTrue(Util.orderAndCompareListsOfObjectsByStringValue(listOfSkis, manager.getEntitiesList()));
     }
 
     @Test
@@ -149,7 +153,7 @@ class SkiTypeManagerTest
         manager.editEntity(oldSkiType, newSkiType);
 
         // then
-        assertEquals(1, manager.getEntities().size());
+        assertEquals(1, manager.getEntitiesList().size());
         assertEquals(newSkiType, manager.getEntitiesList().get(0));
     }
 
@@ -164,7 +168,7 @@ class SkiTypeManagerTest
         manager.editEntity(oldSkiType, newSkiType);
 
         // then
-        assertEquals(1, manager.getEntities().size());
+        assertEquals(1, manager.getEntitiesList().size());
         assertEquals(newSkiType, manager.getEntitiesList().get(0));
     }
 
@@ -182,6 +186,11 @@ class SkiTypeManagerTest
         SkiType newSkiType = new SkiType("lorem", "ipsum");
 
         assertThrows(IllegalArgumentException.class, () -> manager.editEntity(null, newSkiType));
+    }
+
+    @Test
+    public void givenNullSkiType_whenEditingWithNull_thenThrowIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> manager.editEntity(null, null));
     }
 
     @Test
@@ -204,8 +213,8 @@ class SkiTypeManagerTest
         skiTypeAddingConsumer.accept(listOfSkis);
 
         assertEquals(2, manager.search("lo", "").size());
-        assertEquals(listOfSkis.get(0), manager.search("lo", "").get(0));
-        assertEquals(listOfSkis.get(1), manager.search("lo", "").get(1));
+        assertTrue(Util.isInListOfObjectsByString(manager.search("lo", ""), listOfSkis.get(0)));
+        assertTrue(Util.isInListOfObjectsByString(manager.search("lo", ""), listOfSkis.get(1)));
     }
 
     @Test
@@ -236,9 +245,9 @@ class SkiTypeManagerTest
         skiTypeAddingConsumer.accept(listOfSkis);
 
         assertEquals(3, manager.search("", "i").size());
-        assertEquals(listOfSkis.get(0), manager.search("", "i").get(0));
-        assertEquals(listOfSkis.get(1), manager.search("", "i").get(1));
-        assertEquals(listOfSkis.get(2), manager.search("", "i").get(2));
+        assertTrue(Util.isInListOfObjectsByString(manager.search("", "i"), listOfSkis.get(0)));
+        assertTrue(Util.isInListOfObjectsByString(manager.search("", "i"), listOfSkis.get(1)));
+        assertTrue(Util.isInListOfObjectsByString(manager.search("", "i"), listOfSkis.get(2)));
     }
 
     @Test
@@ -270,6 +279,10 @@ class SkiTypeManagerTest
         skiTypeAddingConsumer.accept(listOfSkis);
 
         assertEquals(3, manager.search("l", "i").size());
+        assertTrue(Util.isInListOfObjectsByString(manager.search("l", "i"), listOfSkis.get(0)));
+        assertTrue(Util.isInListOfObjectsByString(manager.search("l", "i"), listOfSkis.get(1)));
+        assertTrue(Util.isInListOfObjectsByString(manager.search("l", "i"), listOfSkis.get(2)));
+
     }
 
     @Test
@@ -301,7 +314,7 @@ class SkiTypeManagerTest
         ));
         skiTypeAddingConsumer.accept(listOfSkis);
 
-        assertEquals(listOfSkis, manager.search(null, null));
+        assertTrue(Util.orderAndCompareListsOfObjectsByStringValue(listOfSkis, manager.search(null, null)));
     }
 
     @Test

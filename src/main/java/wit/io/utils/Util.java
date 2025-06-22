@@ -4,6 +4,8 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Util {
     public static boolean isAnyArgumentNull(Object... objects) {
@@ -36,12 +38,12 @@ public class Util {
     }
 
 
-    public static boolean isDateRangeValid(LocalDate startDate, LocalDate endDate) {
+    public static boolean isDateRangeValid(LocalDate startDate, LocalDate endDate, LocalDate now) {
         if (startDate == null || endDate == null) {
             return false;
         }
 
-        LocalDate now = LocalDate.now();
+//        now = (now == null) ? LocalDate.now() : now;
         if (startDate.isBefore(now)) {
             return false;
         }
@@ -61,6 +63,62 @@ public class Util {
         }
 
         return true;
+    }
+
+    public static String uuidToString(UUID uuid) {
+        return uuid.toString();
+    }
+
+    public static UUID stringToUUID(String str) {
+        return UUID.nameUUIDFromBytes(str.getBytes());
+    }
+
+
+
+    // you may be curious, why I'm using .toString here, the answer is:
+    // our objects have custom .equals methods, thus if I were to compare the objects by themselves here
+    // it would only compare their models.
+    // the same is logic is used by orderAndCompareListsOfObjectsByStringValue()
+    public static boolean compareObjectsByStringValue(Object obj1, Object obj2) {
+        if (obj1 == null && obj2 == null) {
+            return true;
+        }
+        if (obj1 == null || obj2 == null) {
+            return false;
+        }
+        return obj1.toString().equals(obj2.toString());
+    }
+
+    public static boolean orderAndCompareListsOfObjectsByStringValue(List<?> list1, List<?> list2) {
+        if (list1.size() != list2.size()) {
+            return false;
+        }
+
+        List<String> stringList1 = list1.stream()
+                .map(Object::toString)
+                .collect(Collectors.toList());
+
+        List<String> stringList2 = list2.stream()
+                .map(Object::toString)
+                .collect(Collectors.toList());
+
+        stringList1.sort(String::compareTo);
+        stringList2.sort(String::compareTo);
+
+        return stringList1.equals(stringList2);
+    }
+
+    public static boolean orderAndCompareSetsOfObjectsByStringValue(Set<?> set1, Set<?> set2) {
+        return orderAndCompareListsOfObjectsByStringValue(new ArrayList<>(set1), new ArrayList<>(set2));
+    }
+
+    public static boolean isInListOfObjectsByString(List<?> list, Object obj) {
+        if (list == null || list.isEmpty()) {
+            return false;
+        }
+
+        return list.stream()
+                .anyMatch(itemInList -> Objects.toString(itemInList).equals(obj.toString()));
     }
 
 }
