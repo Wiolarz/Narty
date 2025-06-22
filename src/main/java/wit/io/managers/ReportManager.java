@@ -4,6 +4,7 @@ import wit.io.data.Ski;
 import wit.io.data.SkiType;
 import wit.io.data.Rent;
 import wit.io.data.enums.RentStatus;
+import wit.io.utils.Util;
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
@@ -23,6 +24,9 @@ public class ReportManager {
      * @param skiManager Manages ski inventory management
      */
     public ReportManager(RentManager rentManager, SkiManager skiManager) {
+        if(Util.isAnyArgumentNull(rentManager, skiManager)) {
+            throw new IllegalArgumentException("One or more of given arguments were null.");
+        }
         this.rentManager = rentManager;
         this.skiManager = skiManager;
     }

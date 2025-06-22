@@ -42,7 +42,7 @@ public class RentManagerTest {
 
 
     private static LocalDate getDateForDay(int day) {
-        return LocalDate.of(2025, 6, day);
+        return LocalDate.of(2025, 5, day);
     }
 
     public void switchToNewDay(int day) throws SkiAppException {
@@ -103,7 +103,7 @@ public class RentManagerTest {
         ));
         dataEntitySetter.accept(setOfRentals);
 
-        manager = new RentManager("src/test/java/wit/io/datasources/Rent");
+        switchToNewDay(22);
         assertEquals(2, manager.getEntitiesList().size());
         assertTrue(Util.orderAndCompareSetsOfObjectsByStringValue(setOfRentals, manager.getEntities()));
     }
