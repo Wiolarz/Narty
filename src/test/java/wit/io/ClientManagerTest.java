@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ClientManagerTest {
 
     private ClientManager manager = null;
-    private final String testFilePath = "src/test/java/wit/io/datasources/ClientTest";
 
     private final Consumer<List<Client>> clientAddingConsumer = (list) -> list.forEach(client -> {
         try {
@@ -34,7 +33,7 @@ public class ClientManagerTest {
     @BeforeEach
     public void setUp() {
         try {
-            manager = new ClientManager(testFilePath);
+            manager = new ClientManager("src/test/java/wit/io/datasources/ClientTest");
             manager.resetEntityData();
         } catch (WritingException | ReadingException e) {
             fail(e.getMessage());
@@ -55,7 +54,7 @@ public class ClientManagerTest {
         );
         clientAddingConsumer.accept(clients);
 
-        manager = new ClientManager(testFilePath);
+        manager = new ClientManager("src/test/java/wit/io/datasources/ClientTest");
 
         assertEquals(3, manager.getEntities().size());
         assertTrue(Util.orderAndCompareListsOfObjectsByStringValue(clients, manager.getEntitiesList()));
@@ -312,13 +311,13 @@ public class ClientManagerTest {
 
     @Test
     public void givenDatasourceFileIsMissing_whenWritingNewClient_thenFileIsCreated() throws Exception {
-        File file = new File(testFilePath);
+        File file = new File("src/test/java/wit/io/datasources/ClientTest");
         file.delete();
-        manager = new ClientManager(testFilePath);
+        manager = new ClientManager("src/test/java/wit/io/datasources/ClientTest");
 
         manager.addEntity(new Client("1241", "f", "l", "d"));
 
-        file = new File(testFilePath);
+        file = new File("src/test/java/wit/io/datasources/ClientTest");
         assertTrue(file.exists());
         assertEquals(1, manager.getEntities().size());
     }

@@ -15,26 +15,20 @@ import wit.io.utils.Writeable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.*;
-import java.awt.Button;
-import java.awt.Dimension;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.text.ParseException;
 import java.util.*;
+import java.time.LocalDate;
+import java.util.List;
 
 
-/* TODO:
-    change updated end date to label not edit box
-    change edit status to be a label only
-    add button "return item"
-    which sets
-
-    send RentStatus as returned only if clicked return, else copy what was before
-
-
+/*
+TODO:
+      scrollable SearchPanel
+      make 3 raport windows:
+        - one that takes two dates
+        - two that just display generated info
  */
 
 
@@ -52,6 +46,7 @@ class SkiDriver {
     static SkiManager skiManager;
     static ClientManager clientManager;
     static RentManager rentManger;
+    static ErrorPopup errorPopup;
 
 
     //endregion Variables
@@ -108,9 +103,9 @@ class SkiDriver {
         clientManager.addEntity(client3);
 
 
-        Rent rent1 = new Rent(null, new Date(), new Date(), new Date(), ski1.getModel(), client1.getDocId(), "pierwsze wypozyczenia", RentStatus.ACTIVE);
-        //Rent rent2 = new Rent(null, new Date(), new Date(), new Date(), ski2.getModel(), client2.getDocId(), "drugie wypozyczenia", RentStatus.ACTIVE);
-        //Rent rent3 = new Rent(null, new Date(), new Date(), new Date(), ski3.getModel(), client3.getDocId(), "trzemcie wypozyczenia", RentStatus.ACTIVE);
+        Rent rent1 = new Rent(null, LocalDate.now(), LocalDate.now().plusDays(1), LocalDate.now().plusDays(1), ski1.getModel(), client1.getDocId(), "pierwsze wypozyczenia", RentStatus.ACTIVE);
+        //Rent rent2 = new Rent(null, LocalDate.now(), LocalDate.now(), LocalDate.now(), ski2.getModel(), client2.getDocId(), "drugie wypozyczenia", RentStatus.ACTIVE);
+        //Rent rent3 = new Rent(null, LocalDate.now(), LocalDate.now(), LocalDate.now(), ski3.getModel(), client3.getDocId(), "trzemcie wypozyczenia", RentStatus.ACTIVE);
         rentManger.addEntity(rent1);
         //rentManger.addEntity(rent2);
         //rentManger.addEntity(rent3);
@@ -132,6 +127,26 @@ class SkiDriver {
 
         // setSize
         mainFrame.setSize(1000, 500);
+
+
+        //Error popup
+        errorPopup = new ErrorPopup(mainFrame);
+
+        // resize Action
+        mainFrame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent componentEvent){
+                errorPopup.hide();
+                errorPopup.changedFrame(mainFrame);
+                errorPopup.show();
+            }
+            @Override
+            public void componentMoved(ComponentEvent componentEvent){
+                errorPopup.hide();
+                errorPopup.changedFrame(mainFrame);
+                errorPopup.show();
+            }
+        });
     }
 
     //endregion Init
@@ -147,7 +162,7 @@ class SkiDriver {
 
 
     /**
-     * <a href="https://stackoverflow.com/a/70393691/17491940">...</a>
+     * <a href="https://stackoverflow.com/a/70393691/17491940">Indian Homie</a>
      * @param x, y
      * @return parameter to be used alongside add method to determine layout of new element
      */
@@ -247,8 +262,8 @@ class SkiDriver {
             //System.out.println("button is pressed  " + this.getLabel());
             tab.selectedItem(storedEntity);
         }
-
     }
+
 
     // Entity Edit BUTTONS
     private static class CreateNewEntityButton<E extends Writeable, M extends Manager<E>> extends Button implements ActionListener {
@@ -260,7 +275,6 @@ class SkiDriver {
         public void actionPerformed(ActionEvent e) {
             //System.out.println("button is pressed  " + this.getLabel());
             panel.createItem();
-            panel.repeatSearch();
         }
     }
     private static class EditEntityButton<E extends Writeable, M extends Manager<E>> extends Button implements ActionListener {
@@ -272,7 +286,6 @@ class SkiDriver {
         public void actionPerformed(ActionEvent e) {
             //System.out.println("button is pressed  " + this.getLabel());
             panel.editItem();
-            panel.repeatSearch();
         }
     }
     private static class DeleteEntityButton<E extends Writeable, M extends Manager<E>> extends Button implements ActionListener {
@@ -284,7 +297,6 @@ class SkiDriver {
         public void actionPerformed(ActionEvent e) {
             //System.out.println("button is pressed  " + this.getLabel());
             panel.deleteItem();
-            panel.repeatSearch();
         }
     }
 
@@ -295,6 +307,8 @@ class SkiDriver {
 
     private static abstract class GenericAppTab<E extends Writeable, M extends Manager<E>> extends JPanel implements searchableTab<E> {
         SearchPanel<E, M> searchPanel;
+
+        // Entity panel has to made first
         EntityPanel<E, M> entityPanel;
 
 
@@ -304,6 +318,10 @@ class SkiDriver {
 
         public final void selectedItem(E selectedEntity) {
             entityPanel.entityLoaded(selectedEntity);
+        }
+
+        protected final boolean isThereNoSelectedItem() {
+            return entityPanel.selectedEntity == null;
         }
     }
 
@@ -363,16 +381,40 @@ class SkiDriver {
             selectedEntity = null;
             E newEntity = loadItemData();
             try {
+                if (newEntity == null) {
+                    throw new FailedLoadingUserInputException();
+                }
                 manager.addEntity(newEntity);
-            } catch (SkiAppException e) { // TODO consider Split error message so that it can cover case if loading item data was successful
-                System.out.println("Failed to create new SkiType. " + newEntity.toString() + " Error: " + e);
+                repeatSearch(); // doesn't throw errors
+            } catch (FailedLoadingUserInputException e) {
+                errorPopup.show(e.getMessage() == null ?  ""+e : e.getMessage()  + " Error");
+                System.out.println("Failed to load new entity. " + " Error: " + e);
+            }
+            catch (SkiAppException e) {
+                errorPopup.show(e.getMessage() == null ?  ""+e : e.getMessage() + " Error");
+                System.out.println("Failed to create new entity. " + newEntity.toString() + " Error: " + e);
             }
 
         }
         final void editItem() {
             try {
-                manager.editEntity(selectedEntity, loadItemData());
+                E newEntity = loadItemData();
+                if (selectedEntity == null) {
+                    throw new FailedSelectingEntityException();
+                }
+                if (newEntity == null) {
+                    throw new FailedLoadingUserInputException();
+                }
+                manager.editEntity(selectedEntity, newEntity);
+                repeatSearch(); // doesn't throw errors
+            }catch (FailedSelectingEntityException e) {
+                errorPopup.show(e.getMessage() == null ?  ""+e : e.getMessage() + " Error");
+                System.out.println("Failed to select entity. " + " Error: " + e);
+            } catch (FailedLoadingUserInputException e) {
+                errorPopup.show(e.getMessage() == null ?  ""+e : e.getMessage() + " Error");
+                System.out.println("Failed to load new entity. " + " Error: " + e);
             } catch (SkiAppException e) {
+                errorPopup.show(e.getMessage() == null ?  ""+e : e.getMessage() + " Error");
                 System.out.println("Failed to edit: " + selectedEntity.toString() + "  Error: " + e);
             }
         }
@@ -380,7 +422,9 @@ class SkiDriver {
             try {
                 manager.removeEntity(selectedEntity);
                 selectedEntity = null;
+                repeatSearch(); // doesn't throw errors
             } catch (SkiAppException e) {
+                errorPopup.show(e.getMessage() == null ?  ""+e : e.getMessage() + " Error");
                 System.out.println("Failed to delete: " + selectedEntity.toString() + "  Error: " + e);
             }
         }
@@ -393,10 +437,10 @@ class SkiDriver {
 
     private static class SkiTypeAppTab extends GenericAppTab<SkiType, SkiTypeManager> {
         SkiTypeAppTab(SkiTypeManager manager_) {
-            searchPanel = new SkiTypeSearchPanel(manager_, this);
-            add(searchPanel);
-
             entityPanel = new SkiTypeEntityPanel(manager_, this);
+            searchPanel = new SkiTypeSearchPanel(manager_, this);
+
+            add(searchPanel);
             add(entityPanel);
         }
     }
@@ -449,6 +493,12 @@ class SkiDriver {
 
         public void loadSearchResults(ArrayList<SkiType> searchResults) {
             searchResultsPanel.removeAll();
+            if (!searchResults.isEmpty()) {
+                if (parent.isThereNoSelectedItem()) {
+                    parent.selectedItem(searchResults.get(0));
+                }
+            }
+
 
             int number_of_results = searchResults.size();
             if (number_of_results == 0) {
@@ -563,22 +613,26 @@ class SkiDriver {
 
         @Override
         SkiType loadItemData() {
-            return new SkiType(selectedItemName.getText(), selectedItemDescription.getText());
+            try {
+                return new SkiType(selectedItemName.getText(), selectedItemDescription.getText());
+            } catch (Exception e) {
+                System.out.println("failed loading data: " + e);
+            }
+            return null;
         }
     }
 
     //endregion SkiType
 
 
-
     //region Ski
 
     private static class SkiAppTab extends GenericAppTab<Ski, SkiManager> {
         SkiAppTab(SkiManager manager_, SkiTypeManager skiTypeManager) {
-            searchPanel = new SkiSearchPanel(manager_, this);
-            add(searchPanel);
-
             entityPanel = new SkiEntityPanel(manager_, this, skiTypeManager);
+            searchPanel = new SkiSearchPanel(manager_, this);
+
+            add(searchPanel);
             add(entityPanel);
         }
     }
@@ -702,6 +756,11 @@ class SkiDriver {
 
         public void loadSearchResults(ArrayList<Ski> searchResults) {
             searchResultsPanel.removeAll();
+            if (!searchResults.isEmpty()) {
+                if (parent.isThereNoSelectedItem()) {
+                    parent.selectedItem(searchResults.get(0));
+                }
+            }
 
             int number_of_results = searchResults.size();
             if (number_of_results == 0) {
@@ -910,16 +969,16 @@ class SkiDriver {
             try{
                 length = Float.parseFloat(selectedItemLength.getText());
             } catch (NullPointerException e){
-                System.out.println("loadItemData " + e.getMessage());
+                System.out.println("loadItemData " + e.getMessage() == null ?  ""+e : e.getMessage());
                 return null;
             }
             catch (NumberFormatException e) {
-                System.out.println("loadItemData " + e.getMessage());
+                System.out.println("loadItemData " + e.getMessage() == null ?  ""+e : e.getMessage());
                 return null;
             }
 
             SkiType skiType = skiTypes.get(selectedItemSkiTypeComboBox.getSelectedIndex());
-
+            try {
             return new Ski(
                     skiType,
                     selectedItemBrand.getText(),
@@ -927,7 +986,11 @@ class SkiDriver {
                     selectedItemBonds.getText(),
                     length
             );
-        }
+            } catch (Exception e) {
+                System.out.println("failed loading data: " + e);
+            }
+                return null;
+            }
     }
 
     //endregion Ski
@@ -937,10 +1000,10 @@ class SkiDriver {
 
     private static class ClientAppTab extends GenericAppTab<Client, ClientManager> {
         ClientAppTab(ClientManager manager_) {
-            searchPanel = new ClientSearchPanel(manager_, this);
-            add(searchPanel);
-
             entityPanel = new ClientEntityPanel(manager_, this);
+            searchPanel = new ClientSearchPanel(manager_, this);
+
+            add(searchPanel);
             add(entityPanel);
         }
     }
@@ -1029,6 +1092,11 @@ class SkiDriver {
 
         public void loadSearchResults(ArrayList<Client> searchResults) {
             searchResultsPanel.removeAll();
+            if (!searchResults.isEmpty()) {
+                if (parent.isThereNoSelectedItem()) {
+                    parent.selectedItem(searchResults.get(0));
+                }
+            }
 
             int number_of_results = searchResults.size();
             if (number_of_results == 0) {
@@ -1188,12 +1256,17 @@ class SkiDriver {
 
         @Override
         Client loadItemData() {
-            return new Client(
+            try {
+                return new Client(
                     selectedItemDocIDTextField.getText(),
                     selectedItemFirstNameTextField.getText(),
                     selectedItemLastNameTextField.getText(),
                     selectedItemDescriptionTextField.getText());
-        }
+            } catch (Exception e) {
+                System.out.println("failed loading data: " + e);
+            }
+                return null;
+            }
     }
 
     //endregion Client
@@ -1203,13 +1276,14 @@ class SkiDriver {
 
     private static class RentAppTab extends GenericAppTab<Rent, RentManager> {
         RentAppTab(RentManager manager_, ClientManager clientManager_, SkiManager skiManager_) {
-            searchPanel = new RentSearchPanel(manager_, this, clientManager_, skiManager_);
-            add(searchPanel);
-
             entityPanel = new RentEntityPanel(manager_, this, clientManager_, skiManager_);
+            searchPanel = new RentSearchPanel(manager_, this, clientManager_, skiManager_);
+
+            add(searchPanel);
             add(entityPanel);
         }
     }
+
 
     private static class RentSearchPanel extends SearchPanel<Rent, RentManager> {
         RentManager manager;
@@ -1351,9 +1425,9 @@ class SkiDriver {
 
         @Override
         protected ArrayList<Rent> performSearch() {
-            Date startDate = null;
-            Date endDate = null;
-            Date updatedEndDate = null;
+            LocalDate startDate = null;
+            LocalDate endDate = null;
+            LocalDate updatedEndDate = null;
             String comment = searchComment.getText();
             try{
                 startDate = Util.stringToDate(searchStartDate.getText());
@@ -1392,8 +1466,12 @@ class SkiDriver {
 
 
         public void loadSearchResults(ArrayList<Rent> searchResults) {
-
             searchResultsPanel.removeAll();
+            if (!searchResults.isEmpty()) {
+                if (parent.isThereNoSelectedItem()) {
+                    parent.selectedItem(searchResults.get(0));
+                }
+            }
 
             int number_of_results = searchResults.size();
             if (number_of_results == 0) {
@@ -1407,7 +1485,11 @@ class SkiDriver {
             for (Rent rentItem : searchResults) {
                 System.out.println(rentItem.toString());
                 SearchedPositionButton<Rent> skiResult = new SearchedPositionButton<>(
-                        rentItem.getSkiModel() + " " + rentItem.getClientID() + " " + rentItem.getStatus(),
+                        rentItem.getClientID() + " | " +
+                                rentItem.getSkiModel() + " | " +
+                                rentItem.getStartDate() + " - " +
+                                rentItem.getEndDate() + " | " +
+                                rentItem.getStatus(),
                         rentItem, parent
                 );
 
@@ -1427,10 +1509,10 @@ class SkiDriver {
 
         JTextField selectedStartDate;
         JTextField selectedEndDate;
-        JTextField selectedUpdatedEndDate;
+        JLabel selectedUpdatedEndDate;
         JTextField selectedComment;
 
-        AutoCompleteComboBox selectedItemRentStatusComboBox;
+        //AutoCompleteComboBox selectedItemRentStatusComboBox;
         AutoCompleteComboBox selectedItemClientComboBox;
         AutoCompleteComboBox selectedItemSkiComboBox;
 
@@ -1450,7 +1532,7 @@ class SkiDriver {
 
             this.selectedStartDate = new JTextField("");
             this.selectedEndDate = new JTextField("");
-            this.selectedUpdatedEndDate = new JTextField("");
+            this.selectedUpdatedEndDate = new JLabel("");
             this.selectedComment = new JTextField("");
 
 
@@ -1480,9 +1562,33 @@ class SkiDriver {
 
             selectedItemClientComboBox = new AutoCompleteComboBox(clientsNames);
             selectedItemSkiComboBox = new AutoCompleteComboBox(skiNames);
-            selectedItemRentStatusComboBox = new AutoCompleteComboBox(RentStatus.values());
+            //selectedItemRentStatusComboBox = new AutoCompleteComboBox(RentStatus.values());
 
 
+            EditEntityButton<Rent, RentManager> changeRentToReturnedButton = new EditEntityButton<>("Returned", this);
+            changeRentToReturnedButton.addActionListener((e)->{
+
+
+                Rent returnedRent = new Rent(
+                        selectedEntity.getRentID(),
+                        selectedEntity.getStartDate(),
+                        selectedEntity.getEndDate(),
+                        selectedEntity.getUpdatedEndDate(),
+                        selectedEntity.getSkiModel(),
+                        selectedEntity.getClientID(),
+                        selectedEntity.getComment(),
+                        RentStatus.RETURNED
+                );
+
+                try {
+                    System.out.println("attempt to edit entity using return button");
+                    manager.editEntity(selectedEntity, returnedRent);
+                    repeatSearch(); // doesn't throw errors
+                } catch (SkiAppException returnItemFailed) {
+                    System.out.println("Failed returning an item " + selectedEntity.toString() +  " Error: " + returnItemFailed);
+                }
+
+            });
 
 
             CreateNewEntityButton<Rent, RentManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
@@ -1493,8 +1599,6 @@ class SkiDriver {
 
             DeleteEntityButton<Rent, RentManager> deleteEntityButton = new DeleteEntityButton<>("Delete", this);
             deleteEntityButton.addActionListener(deleteEntityButton);
-
-
 
 
 
@@ -1515,8 +1619,7 @@ class SkiDriver {
 
             AutoCompleteComboBox[] comboBoxes = {
                     selectedItemClientComboBox,
-                    selectedItemSkiComboBox,
-                    selectedItemRentStatusComboBox
+                    selectedItemSkiComboBox
             };
             for (AutoCompleteComboBox comboBox: comboBoxes) {
                 comboBox.addActionListener(new ActionListener() {
@@ -1620,7 +1723,8 @@ class SkiDriver {
             gbc.gridy += 1;
             gbc.gridx = 0;
             gbc.gridwidth = 3; // wider element
-            add(selectedItemRentStatusComboBox, gbc);
+            add(changeRentToReturnedButton, gbc);
+            //add(selectedItemRentStatusComboBox, gbc);
             gbc.gridwidth = 1;
 
 
@@ -1670,24 +1774,24 @@ class SkiDriver {
             }
             selectedItemSkiComboBox.setSelectedIndex(itemSkiIndex);
 
-            int itemRentStatusIndex = 0;
-            for (int k = 0; k < selectedItemRentStatusComboBox.getItemCount(); k++){
-                if(selectedItemRentStatusComboBox.getItemAt(k).equals(rentStatus)){
-                    itemRentStatusIndex = k;
-                    break;
-                }
-            }
-            selectedItemRentStatusComboBox.setSelectedIndex(itemRentStatusIndex);
+//            int itemRentStatusIndex = 0;
+//            for (int k = 0; k < selectedItemRentStatusComboBox.getItemCount(); k++){
+//                if(selectedItemRentStatusComboBox.getItemAt(k).equals(rentStatus)){
+//                    itemRentStatusIndex = k;
+//                    break;
+//                }
+//            }
+//            selectedItemRentStatusComboBox.setSelectedIndex(itemRentStatusIndex);
         }
 
         @Override
         Rent loadItemData() {
 
-            Date startDate = null;
+            LocalDate startDate = null;
             try {
                 startDate = Util.stringToDate(selectedStartDate.getText());
             } catch (ParseException ignored) {}
-            Date endDate = null;
+            LocalDate endDate = null;
             try {
                 endDate = Util.stringToDate(selectedEndDate.getText());
             } catch (ParseException ignored) {}
@@ -1696,17 +1800,22 @@ class SkiDriver {
 
             String SkiModel = skis.get(selectedItemSkiComboBox.getSelectedIndex()).getModel();
             String clientID = clients.get(selectedItemClientComboBox.getSelectedIndex()).getDocId();
-            RentStatus rentStatus = RentStatus.valueOf(selectedItemRentStatusComboBox.getSelectedItem().toString());
+            //RentStatus rentStatus = RentStatus.valueOf(selectedItemRentStatusComboBox.getSelectedItem().toString());
 
 
             UUID uuid = null;
             if (selectedEntity != null) {
                 uuid = selectedEntity.getRentID();
             }
+            try {
+                return new Rent(
+                        uuid, startDate, endDate, null, SkiModel, clientID, comment, selectedEntity.getStatus()
+                );
+            } catch (Exception e) {
+                System.out.println("failed loading data: " + e);
+                return null;
+            }
 
-            return new Rent(
-                    uuid, startDate, endDate, null, SkiModel, clientID, comment, rentStatus
-            );
         }
     }
 
@@ -1817,12 +1926,12 @@ class SkiDriver {
     }
 
     //TODO STUB
-    public static String translateDateToString(Date date) {
+    public static String translateDateToString(LocalDate date) {
         return Util.dateToString(date);
     }
     //TODO STUB
-    public static Date translateStringToDate(String stringDate) {
-        Date date = null;
+    public static LocalDate translateStringToDate(String stringDate) {
+        LocalDate date = null;
         try {
             date = Util.stringToDate(stringDate);
         } catch (ParseException e) {
@@ -1831,17 +1940,88 @@ class SkiDriver {
         return date;
     }
 
+    static class ErrorPopup implements ActionListener{
+        Popup popup;
+        JLabel label;
+        JFrame jframe;
+        PopupFactory popupFactory;
+        JPanel popupPanel;
+        JButton okButton;
+        ErrorPopup(JFrame frame){
+            jframe = frame;
+            popupPanel = new JPanel();
 
-//      Todo: states for comboBox
-//    public static void skiTypesController(SkiTypeManager skiTypeManager){
-//        SkiType[] controlledSkiTypes = null;
-//
-//        public static void getSkiTypes() {
-//            controlledSkiTypes = skiTypeManager.getEntitiesList();
-//            String[] skiTypeNames = new String[this.skiTypes.size()];
-//            for (int i = 0; i < skiTypes.size(); i++) {
-//                skiTypeNames[i] = skiTypes.get(i).getName();
-//            }
-//        }
-//    }
+            label = new JLabel();
+            okButton = new JButton("OK");
+            okButton.addActionListener(this);
+
+//            popupPanel.setPreferredSize(new Dimension(400, 300));
+            popupPanel.setLayout(new GridBagLayout());
+            popupPanel.setBackground(new Color(219,219,219));
+
+            GridBagConstraints constraints = new GridBagConstraints();
+            constraints.insets = new Insets(6,6,6,6);
+            constraints.gridx = 0;
+            constraints.gridy = 0;
+            popupPanel.add(label, constraints);
+            constraints.gridy = 3;
+            popupPanel.add(okButton, constraints);
+
+            popupFactory = new PopupFactory();
+
+            popup = popupFactory.getPopup(
+                    jframe,
+                    popupPanel,
+                    (jframe.getX() + jframe.getWidth() / 2) - popupPanel.getWidth() / 2,
+                    (jframe.getY() + jframe.getHeight() / 2) - popupPanel.getHeight() / 2
+            );
+
+        }
+        public void actionPerformed(ActionEvent event){
+            String actionCommand = event.getActionCommand();
+            if (actionCommand.equals("OK")) {
+                popup.hide();
+                popup = popupFactory.getPopup(
+                        jframe,
+                        popupPanel,
+                        (jframe.getX() + jframe.getWidth() / 2) - popupPanel.getWidth() / 2,
+                        (jframe.getY() + jframe.getHeight() / 2) - popupPanel.getHeight() / 2
+                );
+            }
+            else{
+                popup.show();
+            }
+
+        }
+
+        public void show(String errorMsg){
+            this.label.setText(errorMsg);
+            this.popup.show();
+            System.out.println(popupPanel.getWidth());
+            System.out.println(popupPanel.getHeight());
+        }
+
+        public void show(){
+            if(!(this.label.getText().isEmpty())){
+                this.popup.show();
+            }
+        }
+
+        public void hide(){
+            this.popup.hide();
+        }
+
+        public void changedFrame(JFrame frame){
+            this.jframe = frame;
+            popup = popupFactory.getPopup(
+                    jframe,
+                    popupPanel,
+                    (jframe.getX() + jframe.getWidth() / 2) - popupPanel.getWidth() / 2,
+                    (jframe.getY() + jframe.getHeight() / 2) - popupPanel.getHeight() / 2
+            );
+        }
+
+    }
+
+
 }
