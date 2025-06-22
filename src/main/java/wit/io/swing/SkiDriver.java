@@ -25,6 +25,19 @@ import java.awt.GridLayout;
 import java.text.ParseException;
 import java.util.*;
 
+
+/* TODO:
+    change updated end date to label not edit box
+    change edit status to be a label only
+    add button "return item"
+    which sets
+
+    send RentStatus as returned only if clicked return, else copy what was before
+
+
+ */
+
+
 class SkiDriver {
 
     //region Variables
@@ -96,11 +109,11 @@ class SkiDriver {
 
 
         Rent rent1 = new Rent(null, new Date(), new Date(), new Date(), ski1.getModel(), client1.getDocId(), "pierwsze wypozyczenia", RentStatus.ACTIVE);
-        Rent rent2 = new Rent(null, new Date(), new Date(), new Date(), ski2.getModel(), client2.getDocId(), "drugie wypozyczenia", RentStatus.ACTIVE);
-        Rent rent3 = new Rent(null, new Date(), new Date(), new Date(), ski3.getModel(), client3.getDocId(), "trzemcie wypozyczenia", RentStatus.ACTIVE);
+        //Rent rent2 = new Rent(null, new Date(), new Date(), new Date(), ski2.getModel(), client2.getDocId(), "drugie wypozyczenia", RentStatus.ACTIVE);
+        //Rent rent3 = new Rent(null, new Date(), new Date(), new Date(), ski3.getModel(), client3.getDocId(), "trzemcie wypozyczenia", RentStatus.ACTIVE);
         rentManger.addEntity(rent1);
-        rentManger.addEntity(rent2);
-        rentManger.addEntity(rent3);
+        //rentManger.addEntity(rent2);
+        //rentManger.addEntity(rent3);
     }
 
 
@@ -347,6 +360,7 @@ class SkiDriver {
         }
 
         final void createItem() {
+            selectedEntity = null;
             E newEntity = loadItemData();
             try {
                 manager.addEntity(newEntity);
@@ -365,6 +379,7 @@ class SkiDriver {
         final void deleteItem() {
             try {
                 manager.removeEntity(selectedEntity);
+                selectedEntity = null;
             } catch (SkiAppException e) {
                 System.out.println("Failed to delete: " + selectedEntity.toString() + "  Error: " + e);
             }
@@ -1676,10 +1691,7 @@ class SkiDriver {
             try {
                 endDate = Util.stringToDate(selectedEndDate.getText());
             } catch (ParseException ignored) {}
-            Date updatedEndDate = null;
-            try {
-                updatedEndDate = Util.stringToDate(selectedUpdatedEndDate.getText());
-            } catch (ParseException ignored) {}
+
             String comment = selectedComment.getText();
 
             String SkiModel = skis.get(selectedItemSkiComboBox.getSelectedIndex()).getModel();
@@ -1687,8 +1699,13 @@ class SkiDriver {
             RentStatus rentStatus = RentStatus.valueOf(selectedItemRentStatusComboBox.getSelectedItem().toString());
 
 
+            UUID uuid = null;
+            if (selectedEntity != null) {
+                uuid = selectedEntity.getRentID();
+            }
+
             return new Rent(
-                    null, startDate, endDate, updatedEndDate, SkiModel, clientID, comment, rentStatus
+                    uuid, startDate, endDate, null, SkiModel, clientID, comment, rentStatus
             );
         }
     }

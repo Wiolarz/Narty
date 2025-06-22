@@ -78,7 +78,7 @@ public class RentManager extends Manager<Rent> {
         }
 
         for (Rent otherRent : getEntities()) {
-            if(otherRent == rent) continue;
+            if(otherRent.equals(rent)) continue;
             if (rentDatesOverlap(rent, otherRent)
                 && (otherRent.getStatus() == RentStatus.ACTIVE || otherRent.getStatus() == RentStatus.OVERDUE)
                 && otherRent.getSkiModel().equals(rent.getSkiModel())) {
