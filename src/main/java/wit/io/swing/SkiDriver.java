@@ -46,6 +46,8 @@ class SkiDriver {
     static SkiManager skiManager;
     static ClientManager clientManager;
     static RentManager rentManger;
+
+    static ReportManager reportManager;
     static ErrorPopup errorPopup;
 
 
@@ -60,6 +62,7 @@ class SkiDriver {
             skiManager = new SkiManager(Const.SkiFilePath);
             clientManager = new ClientManager(Const.ClientFilePath);
             rentManger = new RentManager(Const.RentFilePath);
+            reportManager = new ReportManager(rentManger, skiManager);
         } catch (ReadingException e)
         {
             System.out.println("Failed to create Manager");
@@ -245,6 +248,110 @@ class SkiDriver {
 
     //endregion Helpers
 
+    //region Report Tab
+
+    private static class AvailableSkisButton extends Button implements ActionListener {
+        ReportAppTab panel;
+        AvailableSkisButton(String buttonText, ReportAppTab panel_) {
+            super(buttonText);
+            this.panel = panel_;
+            addActionListener(this);
+        }
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("button is pressed  " + this.getLabel());
+            LinkedHashSet<Ski> reportResult = panel.manager.availableSkis(null); //TODO ask if there needs to be a date selection for this button
+            panel.displayReport(reportResult);
+        }
+    }
+    private static class OverdueSkisButton extends Button implements ActionListener {
+        ReportAppTab panel;
+        OverdueSkisButton(String buttonText, ReportAppTab panel_) {
+            super(buttonText);
+            this.panel = panel_;
+            addActionListener(this);
+        }
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("button is pressed  " + this.getLabel());
+            LinkedHashSet<Ski> reportResult = panel.manager.overdueSkis(); //TODO ask if there needs to be a date selection for this button
+            panel.displayReport(reportResult);
+        }
+    }
+    private static class RentedSkisButton extends Button implements ActionListener {
+        ReportAppTab panel;
+        RentedSkisButton(String buttonText, ReportAppTab panel_) {
+            super(buttonText);
+            this.panel = panel_;
+            addActionListener(this);
+        }
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("button is pressed  " + this.getLabel());
+            LinkedHashSet<Ski> reportResult = panel.manager.availableSkis(null); //TODO ask if there needs to be a date selection for this button
+            panel.displayReport(reportResult);
+        }
+    }
+
+
+    private static class ReportAppTab extends JPanel {
+        ReportManager manager;
+
+        JPanel searchResultsPanel;
+
+        ReportAppTab(ReportManager manager_) {
+            this.manager = manager_;
+
+            AvailableSkisButton availableSkisButton = new AvailableSkisButton("Available Skis", this);
+            OverdueSkisButton overdueSkisButton = new OverdueSkisButton("Overdue Skis", this);
+            RentedSkisButton rentedSkisButton = new RentedSkisButton("Rented Skis", this);
+
+
+            this.searchResultsPanel = new JPanel();
+
+            //LAYOUT
+            setLayout(new GridBagLayout());
+
+
+            int row = 0;
+            int column = 0;
+
+
+            add(availableSkisButton, createGbc(column, row));
+            column += 1;
+            add(overdueSkisButton, createGbc(column, row));
+            column += 1;
+            add(rentedSkisButton, createGbc(column, row));
+
+            column = 0; row += 1;
+            add(searchResultsPanel, createGbc(column, row));
+        }
+
+        public void displayReport(LinkedHashSet<Ski> skisToDisplay) {
+            searchResultsPanel.removeAll();
+            System.out.println("elo");
+
+
+            int number_of_results = skisToDisplay.size();
+            if (number_of_results == 0) {
+                number_of_results = 1;  // Grid layout cannot be set to 0
+                JLabel noResultsLabel = new JLabel("No results");
+                searchResultsPanel.add(noResultsLabel);
+            }
+
+            searchResultsPanel.setLayout(new GridLayout(number_of_results, 1));
+            for (Ski skiItem : skisToDisplay) {
+                System.out.println(skiItem.toString());
+                JLabel skiResult = new JLabel(skiItem.getBrand() + " " + skiItem.getModel());
+
+                searchResultsPanel.add(skiResult);
+            }
+            driver.refresh();
+            System.out.println("End of Report");
+        }
+
+    }
+
+
+    //endregion Report Tab
+
 
     //region Generic Tab elements
 
@@ -254,6 +361,7 @@ class SkiDriver {
 
 
     private static class SearchedPositionButton<E extends Writeable> extends Button implements ActionListener {
+
         E storedEntity;
         searchableTab<E> tab;
 
@@ -261,6 +369,7 @@ class SkiDriver {
             super(buttonText);
             this.storedEntity = storedEntity_;
             this.tab = tab_;
+            addActionListener(this);
         }
 
         public void actionPerformed(ActionEvent e) {
@@ -276,6 +385,7 @@ class SkiDriver {
         CreateNewEntityButton(String buttonText, EntityPanel<E, M> panel_) {
             super(buttonText);
             this.panel = panel_;
+            addActionListener(this);
         }
         public void actionPerformed(ActionEvent e) {
             //System.out.println("button is pressed  " + this.getLabel());
@@ -287,6 +397,7 @@ class SkiDriver {
         EditEntityButton(String buttonText, EntityPanel<E, M> panel_) {
             super(buttonText);
             this.panel = panel_;
+            addActionListener(this);
         }
         public void actionPerformed(ActionEvent e) {
             //System.out.println("button is pressed  " + this.getLabel());
@@ -298,6 +409,7 @@ class SkiDriver {
         DeleteEntityButton(String buttonText, EntityPanel<E, M> panel_) {
             super(buttonText);
             this.panel = panel_;
+            addActionListener(this);
         }
         public void actionPerformed(ActionEvent e) {
             //System.out.println("button is pressed  " + this.getLabel());
@@ -528,7 +640,6 @@ class SkiDriver {
                 System.out.println(skiItem.toString());
                 SearchedPositionButton<SkiType> skiTypeResult = new SearchedPositionButton<>(skiItem.getName(), skiItem, parent);
 
-                skiTypeResult.addActionListener(skiTypeResult);
                 this.showSearchPanel.setBounds(300, 300, 300, i * 1000);
 
                 showSearchPanel.add(skiTypeResult, createGbc(0, i));// ,
@@ -567,13 +678,10 @@ class SkiDriver {
 
 
             CreateNewEntityButton<SkiType, SkiTypeManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
-            createNewEntityButton.addActionListener(createNewEntityButton);
 
             EditEntityButton<SkiType, SkiTypeManager> editEntityButton = new EditEntityButton<>("Edit", this);
-            editEntityButton.addActionListener(editEntityButton);
 
             DeleteEntityButton<SkiType, SkiTypeManager> deleteEntityButton = new DeleteEntityButton<>("Delete", this);
-            deleteEntityButton.addActionListener(deleteEntityButton);
 
 
             //Layout
@@ -799,7 +907,6 @@ class SkiDriver {
                 System.out.println(skiItem.toString());
                 SearchedPositionButton<Ski> skiResult = new SearchedPositionButton<>(skiItem.getBrand() + " " + skiItem.getModel(), skiItem, parent);
 
-                skiResult.addActionListener(skiResult);
 
                 searchResultsPanel.add(skiResult);
             }
@@ -843,13 +950,10 @@ class SkiDriver {
 
 
             CreateNewEntityButton<Ski, SkiManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
-            createNewEntityButton.addActionListener(createNewEntityButton);
 
             EditEntityButton<Ski, SkiManager> editEntityButton = new EditEntityButton<>("Edit", this);
-            editEntityButton.addActionListener(editEntityButton);
 
             DeleteEntityButton<Ski, SkiManager> deleteEntityButton = new DeleteEntityButton<>("Delete", this);
-            deleteEntityButton.addActionListener(deleteEntityButton);
 
 
             this.skiTypes = this.skiTypeManager.getEntitiesList();
@@ -1139,8 +1243,6 @@ class SkiDriver {
                                 clientItem, parent
                         );
 
-                skiTypeResult.addActionListener(skiTypeResult);
-
                 searchResultsPanel.add(skiTypeResult);
             }
             driver.refresh();
@@ -1180,13 +1282,10 @@ class SkiDriver {
 
 
             CreateNewEntityButton<Client, ClientManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
-            createNewEntityButton.addActionListener(createNewEntityButton);
 
             EditEntityButton<Client, ClientManager> editEntityButton = new EditEntityButton<>("Edit", this);
-            editEntityButton.addActionListener(editEntityButton);
 
             DeleteEntityButton<Client, ClientManager> deleteEntityButton = new DeleteEntityButton<>("Delete", this);
-            deleteEntityButton.addActionListener(deleteEntityButton);
 
 
             //Layout
@@ -1517,8 +1616,6 @@ class SkiDriver {
                         rentItem, parent
                 );
 
-                skiResult.addActionListener(skiResult);
-
                 searchResultsPanel.add(skiResult);
             }
             driver.refresh();
@@ -1616,13 +1713,8 @@ class SkiDriver {
 
 
             CreateNewEntityButton<Rent, RentManager> createNewEntityButton = new CreateNewEntityButton<>("New", this);
-            createNewEntityButton.addActionListener(createNewEntityButton);
-
             EditEntityButton<Rent, RentManager> editEntityButton = new EditEntityButton<>("Edit", this);
-            editEntityButton.addActionListener(editEntityButton);
-
             DeleteEntityButton<Rent, RentManager> deleteEntityButton = new DeleteEntityButton<>("Delete", this);
-            deleteEntityButton.addActionListener(deleteEntityButton);
 
 
 
@@ -1856,6 +1948,7 @@ class SkiDriver {
 
         TabButton(String buttonText, JPanel panel_){
             super(buttonText);
+            addActionListener(this);
             this.panel = panel_;
         }
 
@@ -1895,6 +1988,8 @@ class SkiDriver {
 
         RentAppTab rentAppTab = new RentAppTab(rentManger, clientManager, skiManager);
 
+        ReportAppTab reportAppTab = new ReportAppTab(reportManager);
+
 
         // Main Space
         tabSpace = new JPanel();
@@ -1910,10 +2005,7 @@ class SkiDriver {
         TabButton clientTabButton = new TabButton("client", clientAppTab);
         TabButton rentTabButton = new TabButton("rent", rentAppTab);
 
-        skiTypesTabButton.addActionListener(skiTypesTabButton);
-        skiTabButton.addActionListener(skiTabButton);
-        clientTabButton.addActionListener(clientTabButton);
-        rentTabButton.addActionListener(rentTabButton);
+        TabButton reportTabButton = new TabButton("reports", reportAppTab);
 
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -1936,9 +2028,12 @@ class SkiDriver {
         gbc.gridx += 1;
         mainFrame.add(rentTabButton, gbc);
 
+        gbc.gridx += 1;
+        mainFrame.add(reportTabButton, gbc);
+
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = 4;
+        gbc.gridwidth = 5;
 
         gbc.weighty = 1.0;
         gbc.weightx = 1.0;
