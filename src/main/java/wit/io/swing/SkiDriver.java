@@ -32,7 +32,7 @@ TODO:
  */
 
 
-class SkiDriver {
+public class SkiDriver {
 
     //region Variables
     // create a frame
@@ -1948,6 +1948,8 @@ class SkiDriver {
 
     //endregion Main Screen
 
+
+    //public static void
 
     public static void main(String[] args) throws SkiAppException {
         boolean success = managersSetup();

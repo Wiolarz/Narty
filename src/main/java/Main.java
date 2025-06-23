@@ -5,6 +5,7 @@ import wit.io.data.enums.RentStatus;
 import wit.io.exceptions.*;
 import wit.io.managers.RentManager;
 import wit.io.managers.SkiManager;
+import wit.io.swing.SkiDriver;
 import wit.io.utils.Const;
 import wit.io.managers.SkiTypeManager;
 import wit.io.data.SkiType;
@@ -56,8 +57,11 @@ public class Main {
 
 
     public static void main(String[] args) throws EntityAlreadyPresentException, ReadingException, WritingException, EntityNotPresentException, EntityAlreadyPresentException, IllegalArgumentException, WritingException, SkiAppException {
-         RentManager rentManager = new RentManager("src/main/java/wit/io/datasources/rent");
-         rentManager.resetEntityData();
-         rentManager.addEntity(new Rent(null, LocalDate.of(2025, 6, 22), LocalDate.of(2025, 6, 23), null, "10", "10", "", RentStatus.ACTIVE));
+        SkiDriver skiDriver = new SkiDriver();
+        skiDriver.main(args);
+
+        //RentManager rentManager = new RentManager("src/main/java/wit/io/datasources/rent");
+         //rentManager.resetEntityData();
+         //rentManager.addEntity(new Rent(null, LocalDate.of(2025, 6, 22), LocalDate.of(2025, 6, 23), null, "10", "10", "", RentStatus.ACTIVE));
     }
 }
