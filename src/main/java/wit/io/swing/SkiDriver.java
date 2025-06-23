@@ -1290,7 +1290,25 @@ public class SkiDriver {
 
         @Override
         protected ArrayList<Client> performSearch() {
-            return manager.search(searchDocIDTextField.getText(), searchFirstNameTextField.getText(), searchLastNameTextField.getText(), searchDescriptionTextField.getText());
+
+            String docID = searchDocIDTextField.getText();
+            if (docID.isEmpty()) {
+                docID = null;
+            }
+            String firstName = searchFirstNameTextField.getText();
+            if (firstName.isEmpty()) {
+                firstName = null;
+            }
+            String lastName = searchLastNameTextField.getText();
+            if (lastName.isEmpty()) {
+                lastName = null;
+            }
+            String description = searchDescriptionTextField.getText();
+            if (description.isEmpty()) {
+                description = null;
+            }
+
+            return manager.search(docID, firstName, lastName, description);
         }
 
 
@@ -1984,7 +2002,7 @@ public class SkiDriver {
 
             int itemClientIndex = 0;
             for (int i = 0; i < selectedItemClientComboBox.getItemCount(); i++){
-                if(selectedItemClientComboBox.getItemAt(i).equals(clientID)){
+                if(clients.get(i).getDocId().equals(clientID)){
                     itemClientIndex = i;
                     break;
                 }
@@ -2058,12 +2076,14 @@ public class SkiDriver {
 
 
             UUID uuid = null;
+            RentStatus status = RentStatus.ACTIVE;
             if (selectedEntity != null) {
                 uuid = selectedEntity.getRentID();
+                status = selectedEntity.getStatus();
             }
             try {
                 return new Rent(
-                        uuid, startDate, endDate, null, SkiModel, clientID, comment, selectedEntity.getStatus()
+                        uuid, startDate, endDate, null, SkiModel, clientID, comment, status
                 );
             } catch (Exception e) {
                 System.out.println("failed loading data: " + e);
