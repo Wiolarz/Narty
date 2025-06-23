@@ -41,6 +41,7 @@ class SkiDriver {
     static public SkiDriver driver;
 
     static JPanel tabSpace;
+    static JPanel windowSpace;
 
     static SkiTypeManager skiTypeManager;
     static SkiManager skiManager;
@@ -82,7 +83,7 @@ class SkiDriver {
         SkiType skiType1 = new SkiType("hello", "world");
         SkiType skiType2 = new SkiType("kill", "mee");
 
-        for (int i = 0; i < 200; i++) {
+        for (int i = 0; i < 20; i++) {
             skiTypeManager.addEntity(new SkiType("elo" + i, "xd"));
         }
 
@@ -448,8 +449,6 @@ class SkiDriver {
         //TODO implement safer constructor
         GenericAppTab<E, M> parent;
         JPanel searchResultsPanel;
-        JScrollPane scrollableSearchResultsPanel;
-        JPanel showSearchPanel;
 
         protected abstract ArrayList<E> performSearch(); // TODO make it even more secure, by forcing overriding of arguments collection
 
@@ -586,13 +585,9 @@ class SkiDriver {
             // add action listener
             searchButton.addActionListener(this);
 
-            this.searchResultsPanel = new JPanel();
-            this.showSearchPanel = new JPanel(new GridBagLayout());
 
-            this.scrollableSearchResultsPanel= new JScrollPane(showSearchPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-            this.showSearchPanel.setPreferredSize(new Dimension(200, 100));
-            //this.scrollableSearchResultsPanel.setBackground( new Color( 153, 153, 102 ) );
-            //this.scrollableSearchResultsPanel.setBounds( 100, 110, 743, 156 );
+            this.searchResultsPanel = new JPanel();
+
 
             setLayout(new GridBagLayout());
 
@@ -601,7 +596,7 @@ class SkiDriver {
             add(this.searchNameTextField, createGbc(1, 0));
             add(this.searchDescriptionTextField,  createGbc(1, 1));
             add(searchButton, createGbc(0, 2, 2));
-            add(scrollableSearchResultsPanel, createGbc(0, 3, 2));
+            add(this.searchResultsPanel, createGbc(0, 3, 2));
 
             // Show all items
             ArrayList<SkiType> results = this.manager.search(null, null);
@@ -615,45 +610,31 @@ class SkiDriver {
 
 
         public void loadSearchResults(ArrayList<SkiType> searchResults) {
-            showSearchPanel.removeAll();
+            searchResultsPanel.removeAll();
             if (!searchResults.isEmpty()) {
                 if (parent.isThereNoSelectedItem()) {
                     parent.selectedItem(searchResults.get(0));
                 }
             }
 
-
             int number_of_results = searchResults.size();
             if (number_of_results == 0) {
                 number_of_results = 1;  // Grid layout cannot be set to 0
                 JLabel noResultsLabel = new JLabel("No results");
-                showSearchPanel.add(noResultsLabel);
+                searchResultsPanel.add(noResultsLabel);
 
             }
-            if (number_of_results > 10) {
-                number_of_results = 10;
-            }
-            //showSearchPanel.setLayout(new GridLayout(number_of_results, 1));
-            int i = 0;
-            //showSearchPanel.setLayout();
+
+            searchResultsPanel.setLayout(new GridLayout(number_of_results, 1));
             for (SkiType skiItem : searchResults) {
                 System.out.println(skiItem.toString());
                 SearchedPositionButton<SkiType> skiTypeResult = new SearchedPositionButton<>(skiItem.getName(), skiItem, parent);
 
-                this.showSearchPanel.setBounds(300, 300, 300, i * 1000);
-
-                showSearchPanel.add(skiTypeResult, createGbc(0, i));// ,
-
-
-                i += 1;
-
+                searchResultsPanel.add(skiTypeResult);
             }
-            showSearchPanel.setMinimumSize(new Dimension(200, searchResults.size() * 10));
-            System.out.println("heigh  " +  showSearchPanel.getHeight());
-
-            scrollableSearchResultsPanel.revalidate();
             driver.refresh();
             System.out.println("End of Search");
+
         }
     }
 
@@ -1993,7 +1974,12 @@ class SkiDriver {
 
         // Main Space
         tabSpace = new JPanel();
-        tabSpace.add(skiTypeAppTab); // TODO remember last selected tab by user
+        windowSpace = new JPanel();
+        tabSpace.setLayout(new GridBagLayout());
+
+        JPanel windowSpace2 = new JPanel(new GridBagLayout());
+
+        tabSpace.add(skiTypeAppTab);
 
 
         mainFrame.setLayout(new GridBagLayout());
@@ -2016,47 +2002,33 @@ class SkiDriver {
         gbc.insets = new Insets(0, 0, gap, 0);
         gbc = createGbc(0, 0);
         gbc.weightx = 0.5;
-        mainFrame.add(skiTypesTabButton, gbc);
 
 
+        windowSpace2.add(skiTypesTabButton, gbc);
         gbc.gridx += 1;
-        mainFrame.add(skiTabButton, gbc);
-
+        windowSpace2.add(skiTabButton, gbc);
         gbc.gridx += 1;
-        mainFrame.add(clientTabButton, gbc);
-
+        windowSpace2.add(clientTabButton, gbc);
         gbc.gridx += 1;
-        mainFrame.add(rentTabButton, gbc);
-
+        windowSpace2.add(rentTabButton, gbc);
         gbc.gridx += 1;
-        mainFrame.add(reportTabButton, gbc);
+        windowSpace2.add(reportTabButton, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
         gbc.gridwidth = 5;
+        gbc.gridx = 0;
+        gbc.gridy += 1;
+        windowSpace2.add(tabSpace, gbc);
 
-        gbc.weighty = 1.0;
-        gbc.weightx = 1.0;
 
-        mainFrame.add(tabSpace, gbc);
+
+
+        windowSpace.add(windowSpace2);
+        JScrollPane uwuScroll = new JScrollPane(windowSpace);
+        uwuScroll.setMinimumSize(new Dimension(mainFrame.getWidth(),mainFrame.getHeight()));
+        mainFrame.add(uwuScroll, gbc);
 
 
         driver.refresh();
-    }
-
-    //TODO STUB
-    public static String translateDateToString(LocalDate date) {
-        return Util.dateToString(date);
-    }
-    //TODO STUB
-    public static LocalDate translateStringToDate(String stringDate) {
-        LocalDate date = null;
-        try {
-            date = Util.stringToDate(stringDate);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-        return date;
     }
 
     static class ErrorPopup implements ActionListener{
@@ -2141,6 +2113,5 @@ class SkiDriver {
         }
 
     }
-
 
 }
