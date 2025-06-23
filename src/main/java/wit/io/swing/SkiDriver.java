@@ -235,6 +235,12 @@ public class SkiDriver {
                 });
             }
         }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            driver.refresh(); //XDDDDDDDDDDDDDDDDDDDDDDD
+            //System.out.println(deleteEntityButton.is);
+        }
     }
 
     static AutoCompleteComboBox createAutoCompleteSearchComboBox(Object[] addAnyToMe) {
@@ -441,6 +447,11 @@ public class SkiDriver {
         protected final boolean isThereNoSelectedItem() {
             return entityPanel.selectedEntity == null;
         }
+
+        public final void reloadComboBox() {
+            System.out.println("reloading search result");
+            entityPanel.reloadComboBox();
+        }
     }
 
 
@@ -546,6 +557,7 @@ public class SkiDriver {
                 System.out.println("Failed to delete: " + selectedEntity.toString() + "  Error: " + e);
             }
         }
+        abstract public void reloadComboBox();
     }
 
     //endregion Generic Tab Core
@@ -554,9 +566,9 @@ public class SkiDriver {
     //region SkiType
 
     private static class SkiTypeAppTab extends GenericAppTab<SkiType, SkiTypeManager> {
-        SkiTypeAppTab(SkiTypeManager manager_) {
+        SkiTypeAppTab(SkiTypeManager manager_, SkiAppTab tabToRefresh) {
             entityPanel = new SkiTypeEntityPanel(manager_, this);
-            searchPanel = new SkiTypeSearchPanel(manager_, this);
+            searchPanel = new SkiTypeSearchPanel(manager_, this, tabToRefresh);
 
             add(searchPanel);
             add(entityPanel);
@@ -571,10 +583,13 @@ public class SkiDriver {
         JTextField searchNameTextField;
         JTextField searchDescriptionTextField;
 
+        SkiAppTab skiAppTab;
 
-        SkiTypeSearchPanel(SkiTypeManager manager_, SkiTypeAppTab parent_) {
+
+        SkiTypeSearchPanel(SkiTypeManager manager_, SkiTypeAppTab parent_, SkiAppTab tabToRefresh) {
             this.manager = manager_;
             this.parent = parent_;
+            this.skiAppTab = tabToRefresh;
 
 
             this.searchNameTextField = new JTextField(16);
@@ -610,6 +625,10 @@ public class SkiDriver {
 
 
         public void loadSearchResults(ArrayList<SkiType> searchResults) {
+            //HACK fix for new types not showing up in search list of sky types of other managers
+            skiAppTab.reloadComboBox();
+
+
             searchResultsPanel.removeAll();
             if (!searchResults.isEmpty()) {
                 if (parent.isThereNoSelectedItem()) {
@@ -722,6 +741,11 @@ public class SkiDriver {
         public void onEntityLoaded(SkiType selectedEntity) {
             selectedItemName.setText(selectedEntity.getName());
             selectedItemDescription.setText(selectedEntity.getDescription());
+        }
+
+        @Override
+        public void reloadComboBox() {
+
         }
 
         @Override
@@ -905,6 +929,7 @@ public class SkiDriver {
         JTextField selectedItemLength;
 
         AutoCompleteComboBox selectedItemSkiTypeComboBox;
+        GridBagConstraints comboBoxGBC;
 
 
         List<SkiType> skiTypes;
@@ -962,13 +987,6 @@ public class SkiDriver {
 
             GridBagConstraints gbc = new GridBagConstraints();
 
-            selectedItemSkiTypeComboBox.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    driver.refresh(); //XDDDDDDDDDDDDDDDDDDDDDDD
-                    //System.out.println(deleteEntityButton.is);
-                }
-            });
 
             gbc.gridx = 0;
             gbc.gridy = 0;
@@ -1037,6 +1055,7 @@ public class SkiDriver {
             gbc.gridx = 0;
             gbc.gridwidth = 3; // wider element
             add(selectedItemSkiTypeComboBox, gbc);
+            comboBoxGBC = gbc;
             gbc.gridwidth = 1;
             //XD
 
@@ -1049,6 +1068,7 @@ public class SkiDriver {
             add(editEntityButton, gbc);
             gbc.gridx += 1;
             add(deleteEntityButton, gbc);
+            gbc.gridx += 1; // test
         }
 
 
@@ -1100,6 +1120,25 @@ public class SkiDriver {
             }
                 return null;
             }
+
+        @Override
+        public void reloadComboBox() {
+            remove(selectedItemSkiTypeComboBox);
+
+            skiTypes = skiTypeManager.getEntitiesList();
+            String[] skiTypeNames = new String[skiTypes.size()];
+            for (int i = 0; i < skiTypes.size(); i++) {
+                skiTypeNames[i] = skiTypes.get(i).getName();
+            }
+
+            selectedItemSkiTypeComboBox = new AutoCompleteComboBox(skiTypeNames);
+
+            add(selectedItemSkiTypeComboBox, comboBoxGBC);
+
+            //IMPORTANT
+            revalidate();
+            repaint();
+        }
     }
 
     //endregion Ski
@@ -1356,6 +1395,11 @@ public class SkiDriver {
             selectedItemLastNameTextField.setText(selectedEntity.getLastName());
             selectedItemDescriptionTextField.setText(selectedEntity.getDescription());
             selectedItemDocIDTextField.setText(String.valueOf(selectedEntity.getDocId()));
+        }
+
+        @Override
+        public void reloadComboBox() {
+
         }
 
         @Override
@@ -1882,6 +1926,11 @@ public class SkiDriver {
         }
 
         @Override
+        public void reloadComboBox() {
+
+        }
+
+        @Override
         Rent loadItemData() {
 
             LocalDate startDate = null;
@@ -1963,9 +2012,10 @@ public class SkiDriver {
         // reference to the main object
         driver = new SkiDriver();
 
-        SkiTypeAppTab skiTypeAppTab = new SkiTypeAppTab(skiTypeManager);
-
         SkiAppTab skiAppTab = new SkiAppTab(skiManager, skiTypeManager);
+
+        SkiTypeAppTab skiTypeAppTab = new SkiTypeAppTab(skiTypeManager, skiAppTab);
+
 
         ClientAppTab clientAppTab = new ClientAppTab(clientManager);
 
