@@ -775,9 +775,9 @@ public class SkiDriver {
     //region Ski
 
     private static class SkiAppTab extends GenericAppTab<Ski, SkiManager> {
-        SkiAppTab(SkiManager manager_, SkiTypeManager skiTypeManager) {
+        SkiAppTab(SkiManager manager_, SkiTypeManager skiTypeManager, SignalSender signalSender) {
             entityPanel = new SkiEntityPanel(manager_, this, skiTypeManager);
-            searchPanel = new SkiSearchPanel(manager_, this);
+            searchPanel = new SkiSearchPanel(manager_, this, signalSender);
 
             add(searchPanel);
             add(entityPanel);
@@ -799,9 +799,12 @@ public class SkiDriver {
 
         GridBagConstraints comboBoxGBC;
 
-        SkiSearchPanel(SkiManager manager_, SkiAppTab parent_) {
+        SignalSender signalSender;
+
+        SkiSearchPanel(SkiManager manager_, SkiAppTab parent_, SignalSender signalSender_) {
             this.manager = manager_;
             this.parent = parent_;
+            this.signalSender = signalSender_;
 
             JLabel itemBrandLabel = new JLabel("Brand:");
             JLabel itemModelLabel = new JLabel("Model:");
@@ -917,6 +920,8 @@ public class SkiDriver {
 
         public void loadSearchResults(ArrayList<Ski> searchResults) {
             searchResultsPanel.removeAll();
+            signalSender.sendReload();
+
             if (!searchResults.isEmpty()) {
                 if (parent.isThereNoSelectedItem()) {
                     parent.selectedItem(searchResults.get(0));
@@ -1120,7 +1125,6 @@ public class SkiDriver {
             add(editEntityButton, gbc);
             gbc.gridx += 1;
             add(deleteEntityButton, gbc);
-            gbc.gridx += 1; // test
         }
 
 
@@ -1456,7 +1460,7 @@ public class SkiDriver {
 
         @Override
         public void reloadComboBox() {
-
+            // empty
         }
 
         @Override
@@ -1504,6 +1508,9 @@ public class SkiDriver {
         AutoCompleteComboBox searchItemClientComboBox;
         AutoCompleteComboBox searchItemSkiComboBox;
 
+        GridBagConstraints clientItemComboBoxGBC;
+        GridBagConstraints skiItemComboBoxGBC;
+
         List<Client> clients;
         List<Ski> skis;
 
@@ -1547,21 +1554,8 @@ public class SkiDriver {
             searchItemSkiComboBox = createAutoCompleteSearchComboBox(skiNames);
             searchItemRentStatusComboBox = createAutoCompleteSearchComboBox(RentStatus.values());
 
-            AutoCompleteComboBox[] comboBoxes = {
-                    searchItemClientComboBox,
-                    searchItemSkiComboBox,
-                    searchItemRentStatusComboBox
-            };
-            for (AutoCompleteComboBox comboBox: comboBoxes) {
-                comboBox.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        driver.refresh(); //XDDDDDDDDDDDDDDDDDDDDDDD
-                        // if it's stupid but it works
-                        // it IS stupid and it works :)
-                    }
-                });
-            }
+
+
 
             // button
             Button searchButton = new Button("search");
@@ -1608,10 +1602,20 @@ public class SkiDriver {
             add(this.searchUpdatedEndDate,  createGbc(column, row));
             row += 1;
             add(this.searchComment,  createGbc(column, row));
+
+
             row += 1;
-            add(this.searchItemSkiComboBox,  createGbc(column, row));
+            skiItemComboBoxGBC = createGbc(column, row);
+
+            add(this.searchItemSkiComboBox, skiItemComboBoxGBC);
+
             row += 1;
-            add(this.searchItemClientComboBox,  createGbc(column, row));
+            clientItemComboBoxGBC = createGbc(column, row);
+
+            add(this.searchItemClientComboBox,  clientItemComboBoxGBC);
+
+
+
             row += 1;
             add(this.searchItemRentStatusComboBox,  createGbc(column, row));
 
@@ -1707,6 +1711,31 @@ public class SkiDriver {
         @Override
         void reloadComboBox() {
             // teraz todo xd
+            remove(searchItemSkiComboBox);
+            remove(searchItemClientComboBox);
+
+            clients = clientManager.getEntitiesList();
+            String[] clientsNames = new String[clients.size()];
+            for (int i = 0; i < clients.size(); i++) {
+                clientsNames[i] = clients.get(i).getFirstName();
+            }
+
+            skis = skiManager.getEntitiesList();
+            String[] skiNames = new String[skis.size()];
+            for (int i = 0; i < skis.size(); i++) {
+                skiNames[i] = skis.get(i).getModel();
+            }
+
+
+            searchItemClientComboBox = createAutoCompleteSearchComboBox(clientsNames);
+            searchItemSkiComboBox = createAutoCompleteSearchComboBox(skiNames);
+
+            add(searchItemClientComboBox, clientItemComboBoxGBC);
+            add(searchItemSkiComboBox, skiItemComboBoxGBC);
+
+            //IMPORTANT
+            revalidate();
+            repaint();
         }
     }
 
@@ -1723,6 +1752,9 @@ public class SkiDriver {
         //AutoCompleteComboBox selectedItemRentStatusComboBox;
         AutoCompleteComboBox selectedItemClientComboBox;
         AutoCompleteComboBox selectedItemSkiComboBox;
+
+        GridBagConstraints clientItemComboBoxGBC;
+        GridBagConstraints skiItemComboBoxGBC;
 
 
         List<Client> clients;
@@ -1820,21 +1852,6 @@ public class SkiDriver {
 
             GridBagConstraints gbc = new GridBagConstraints();
 
-            AutoCompleteComboBox[] comboBoxes = {
-                    selectedItemClientComboBox,
-                    selectedItemSkiComboBox
-            };
-            for (AutoCompleteComboBox comboBox: comboBoxes) {
-                comboBox.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        driver.refresh(); //XDDDDDDDDDDDDDDDDDDDDDDD
-                        // if it's stupid but it works
-                        // it IS stupid and it works :)
-                    }
-                });
-            }
-
 
             gbc.gridx = 0;
             gbc.gridy = 0;
@@ -1900,7 +1917,10 @@ public class SkiDriver {
             gbc.gridy += 1;
             gbc.gridx = 0;
             gbc.gridwidth = 3; // wider element
-            add(selectedItemClientComboBox, gbc);
+
+            clientItemComboBoxGBC = (GridBagConstraints) gbc.clone();
+
+            add(selectedItemClientComboBox, clientItemComboBoxGBC);
 
             // Next Row -> Reset Position
             gbc.gridy += 1;
@@ -1913,7 +1933,10 @@ public class SkiDriver {
             gbc.gridy += 1;
             gbc.gridx = 0;
             gbc.gridwidth = 3; // wider element
-            add(selectedItemSkiComboBox, gbc);
+
+            skiItemComboBoxGBC = (GridBagConstraints) gbc.clone();
+
+            add(selectedItemSkiComboBox, skiItemComboBoxGBC);
 
             // Next Row -> Reset Position
             gbc.gridy += 1;
@@ -1989,11 +2012,34 @@ public class SkiDriver {
 
         @Override
         public void reloadComboBox() {
+            remove(selectedItemClientComboBox);
+            remove(selectedItemSkiComboBox);
+
+
+            clients = clientManager.getEntitiesList();
+            String[] clientsNames = new String[clients.size()];
+            for (int i = 0; i < clients.size(); i++) {
+                clientsNames[i] = clients.get(i).getFirstName();
+            }
+
+            skis = skiManager.getEntitiesList();
+            String[] skiNames = new String[skis.size()];
+            for (int i = 0; i < skis.size(); i++) {
+                skiNames[i] = skis.get(i).getModel();
+            }
+
+
+            selectedItemClientComboBox = new AutoCompleteComboBox(clientsNames);
+            selectedItemSkiComboBox = new AutoCompleteComboBox(skiNames);
+
+            add(selectedItemClientComboBox, clientItemComboBoxGBC);
+            add(selectedItemSkiComboBox, skiItemComboBoxGBC);
 
         }
 
         @Override
         Rent loadItemData() {
+            //TODO fix bug with adding new rent
 
             LocalDate startDate = null;
             try {
@@ -2074,14 +2120,17 @@ public class SkiDriver {
         // reference to the main object
         driver = new SkiDriver();
 
-        SkiAppTab skiAppTab = new SkiAppTab(skiManager, skiTypeManager);
+        SignalSender signalSender = new SignalSender();
+
+
+        SkiAppTab skiAppTab = new SkiAppTab(skiManager, skiTypeManager, signalSender);
 
         SkiTypeAppTab skiTypeAppTab = new SkiTypeAppTab(skiTypeManager, skiAppTab);
-
 
         ClientAppTab clientAppTab = new ClientAppTab(clientManager);
 
         RentAppTab rentAppTab = new RentAppTab(rentManger, clientManager, skiManager);
+        signalSender.rentAppTab = rentAppTab;
 
         ReportAppTab reportAppTab = new ReportAppTab(reportManager);
 
@@ -2226,5 +2275,16 @@ public class SkiDriver {
         }
 
     }
+
+
+    static class SignalSender {
+        public RentAppTab rentAppTab;
+        public void sendReload() {
+            if (rentAppTab != null) {
+                rentAppTab.reloadComboBox();
+            }
+        }
+    }
+
 
 }
