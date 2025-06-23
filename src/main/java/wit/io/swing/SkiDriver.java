@@ -286,7 +286,7 @@ class SkiDriver {
         }
         public void actionPerformed(ActionEvent e) {
             System.out.println("button is pressed  " + this.getLabel());
-            LinkedHashSet<Ski> reportResult = panel.manager.availableSkis(null); //TODO ask if there needs to be a date selection for this button
+            LinkedHashSet<Ski> reportResult = panel.manager.rentedSkis(null); //TODO ask if there needs to be a date selection for this button
             panel.displayReport(reportResult);
         }
     }
@@ -2021,10 +2021,9 @@ class SkiDriver {
 
 
 
-
         windowSpace.add(windowSpace2);
         JScrollPane uwuScroll = new JScrollPane(windowSpace);
-        uwuScroll.setMinimumSize(new Dimension(mainFrame.getWidth(),mainFrame.getHeight()));
+        uwuScroll.setMinimumSize(new Dimension(mainFrame.getContentPane().getSize()));
         mainFrame.add(uwuScroll, gbc);
 
 
