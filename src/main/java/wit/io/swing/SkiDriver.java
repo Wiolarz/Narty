@@ -202,6 +202,7 @@ public class SkiDriver {
             super(selectableEntities);
             setEditor(new BasicComboBoxEditor());
             setEditable(true);
+            addActionListener(this);
         }
         public void setSelectedIndex(int index) {
             super.setSelectedIndex(index);
@@ -450,6 +451,7 @@ public class SkiDriver {
 
         public final void reloadComboBox() {
             System.out.println("reloading search result");
+            searchPanel.reloadComboBox();
             entityPanel.reloadComboBox();
         }
     }
@@ -475,6 +477,9 @@ public class SkiDriver {
         }
 
         abstract void loadSearchResults(ArrayList<E> searchResults);
+
+
+        abstract void reloadComboBox();
     }
 
 
@@ -655,6 +660,11 @@ public class SkiDriver {
             System.out.println("End of Search");
 
         }
+
+        @Override
+        void reloadComboBox() {
+            // empty
+        }
     }
 
 
@@ -783,7 +793,11 @@ public class SkiDriver {
         JTextField searchItemBonds;
         JTextField searchMinItemLength;
         JTextField searchMaxItemLength;
-        // todo: add ski type
+
+        AutoCompleteComboBox searchItemSkiTypeComboBox;
+        List<SkiType> skiTypes;
+
+        GridBagConstraints comboBoxGBC;
 
         SkiSearchPanel(SkiManager manager_, SkiAppTab parent_) {
             this.manager = manager_;
@@ -802,6 +816,15 @@ public class SkiDriver {
             this.searchItemBonds = new JTextField();
             this.searchMinItemLength = new JTextField();
             this.searchMaxItemLength = new JTextField();
+
+            this.skiTypes = skiTypeManager.getEntitiesList();
+            String[] skiTypeNames = new String[this.skiTypes.size()];
+            for (int i = 0; i < this.skiTypes.size(); i++) {
+                skiTypeNames[i] = this.skiTypes.get(i).getName();
+            }
+
+            searchItemSkiTypeComboBox = createAutoCompleteSearchComboBox(skiTypeNames);
+
 
             // button
             Button searchButton = new Button("search");
@@ -835,6 +858,8 @@ public class SkiDriver {
             add(itemMinLengthLabel, createGbc(column, row));
             row += 1;
             add(itemMaxLengthLabel, createGbc(column, row));
+            row += 1;
+            add(skiTypeLabel, createGbc(column, row));
 
             column +=1; row = 0;
 
@@ -847,6 +872,9 @@ public class SkiDriver {
             add(this.searchMinItemLength,  createGbc(column, row));
             row += 1;
             add(this.searchMaxItemLength,  createGbc(column, row));
+            row += 1;
+            comboBoxGBC = createGbc(column, row);
+            add(this.searchItemSkiTypeComboBox, comboBoxGBC);
 
             column = 0; row +=1;
 
@@ -872,21 +900,17 @@ public class SkiDriver {
                 maxLength = Float.parseFloat(searchMaxItemLength.getText());
             } catch (NullPointerException | NumberFormatException ignored){}
 
+            String searchedSkiTypeName = ((String)searchItemSkiTypeComboBox.getSelectedItem()).equals("Any")  ? null : (String)searchItemSkiTypeComboBox.getSelectedItem();
             SkiType searchedSkiType = null;
-//
-//            String typeName = selectedEntity.getType().getName();
-//
-//            // TODO: optimise this  | save this value and use it here String[] skiTypeNames = new String[skiTypes.size()]; uwu
-//            int itemIndex = 0;
-//            for (int i = 0; i < selectedItemSkiTypeComboBox.getSize().getWidth(); i++){
-//                if(selectedItemSkiTypeComboBox.getItemAt(i).equals(typeName)){
-//                    itemIndex = i;
-//                    break;
-//                }
-//            }
-//            selectedItemSkiTypeComboBox.setSelectedIndex(itemIndex);
-
-            //SkiType type, String brand, String model, String bonds, Float minLength, Float maxLength  //TODO fix
+            if (searchedSkiTypeName != null) {
+                for (SkiType skiType : skiTypes) {
+                    if (skiType.getName().equals(searchedSkiTypeName)) {
+                        searchedSkiType = skiType;
+                        break;
+                    }
+                }
+            }
+            //SkiType type, String brand, String model, String bonds, Float minLength, Float maxLength
             return manager.search(searchedSkiType, searchItemBrand.getText(), searchItemModel.getText(), searchItemBonds.getText(), minLength, maxLength);
         }
 
@@ -917,6 +941,25 @@ public class SkiDriver {
             }
             driver.refresh();
             System.out.println("End of Search");
+        }
+
+        @Override
+        void reloadComboBox() {
+            remove(searchItemSkiTypeComboBox);
+
+            skiTypes = skiTypeManager.getEntitiesList();
+            String[] skiTypeNames = new String[skiTypes.size()];
+            for (int i = 0; i < skiTypes.size(); i++) {
+                skiTypeNames[i] = skiTypes.get(i).getName();
+            }
+
+            searchItemSkiTypeComboBox = createAutoCompleteSearchComboBox(skiTypeNames);
+
+            add(searchItemSkiTypeComboBox, comboBoxGBC);
+
+            //IMPORTANT
+            revalidate();
+            repaint();
         }
     }
 
@@ -1054,8 +1097,17 @@ public class SkiDriver {
             gbc.gridy += 1;
             gbc.gridx = 0;
             gbc.gridwidth = 3; // wider element
-            add(selectedItemSkiTypeComboBox, gbc);
-            comboBoxGBC = gbc;
+
+            comboBoxGBC = new GridBagConstraints();
+            comboBoxGBC.fill = GridBagConstraints.HORIZONTAL;
+            comboBoxGBC.insets = new Insets(gap, gap, gap, gap);
+            comboBoxGBC.weightx = 0.5;
+            comboBoxGBC.gridx = gbc.gridx;
+            comboBoxGBC.gridy = gbc.gridy;
+            comboBoxGBC.gridwidth = gbc.gridwidth;
+
+            add(selectedItemSkiTypeComboBox, comboBoxGBC);
+
             gbc.gridwidth = 1;
             //XD
 
@@ -1267,6 +1319,11 @@ public class SkiDriver {
             }
             driver.refresh();
             System.out.println("End of Search");
+        }
+
+        @Override
+        void reloadComboBox() {
+            // empty
         }
     }
 
@@ -1645,6 +1702,11 @@ public class SkiDriver {
             }
             driver.refresh();
             System.out.println("End of Search");
+        }
+
+        @Override
+        void reloadComboBox() {
+            // teraz todo xd
         }
     }
 
