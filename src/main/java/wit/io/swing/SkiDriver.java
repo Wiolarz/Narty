@@ -1203,9 +1203,9 @@ public class SkiDriver {
     //region Client
 
     private static class ClientAppTab extends GenericAppTab<Client, ClientManager> {
-        ClientAppTab(ClientManager manager_) {
+        ClientAppTab(ClientManager manager_, SignalSender signalSender) {
             entityPanel = new ClientEntityPanel(manager_, this);
-            searchPanel = new ClientSearchPanel(manager_, this);
+            searchPanel = new ClientSearchPanel(manager_, this, signalSender);
 
             add(searchPanel);
             add(entityPanel);
@@ -1222,10 +1222,13 @@ public class SkiDriver {
         JTextField searchDocIDTextField;
         JTextField searchDescriptionTextField;
 
+        SignalSender signalSender;
 
-        ClientSearchPanel(ClientManager manager_, ClientAppTab parent_) {
+
+        ClientSearchPanel(ClientManager manager_, ClientAppTab parent_, SignalSender signalSender_) {
             this.manager = manager_;
             this.parent = parent_;
+            this.signalSender = signalSender_;
 
 
             JLabel firstNameLabel = new JLabel("First name:");
@@ -1313,6 +1316,7 @@ public class SkiDriver {
 
 
         public void loadSearchResults(ArrayList<Client> searchResults) {
+            signalSender.sendReload();
             searchResultsPanel.removeAll();
             if (!searchResults.isEmpty()) {
                 if (parent.isThereNoSelectedItem()) {
@@ -2147,7 +2151,7 @@ public class SkiDriver {
 
         SkiTypeAppTab skiTypeAppTab = new SkiTypeAppTab(skiTypeManager, skiAppTab);
 
-        ClientAppTab clientAppTab = new ClientAppTab(clientManager);
+        ClientAppTab clientAppTab = new ClientAppTab(clientManager, signalSender);
 
         RentAppTab rentAppTab = new RentAppTab(rentManger, clientManager, skiManager);
         signalSender.rentAppTab = rentAppTab;
