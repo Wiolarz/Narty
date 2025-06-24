@@ -2137,7 +2137,7 @@ public class SkiDriver {
         if (!success){
             return;
         }
-        populateData();
+        //populateData();
 
         createMainFrame();
 
